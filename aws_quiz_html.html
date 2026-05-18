@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AWS CLF-C02 練習題</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f0eb;min-height:100vh;color:#1a1a1a}
+@media(prefers-color-scheme:dark){body{background:#1c1c1a;color:#e8e8e4}
+.card{background:#2a2a28!important;border-color:rgba(255,255,255,0.1)!important}
+.header{background:#2a2a28!important;border-color:rgba(255,255,255,0.1)!important}
+.opt-btn{background:#2a2a28!important;border-color:rgba(255,255,255,0.12)!important;color:#e8e8e4!important}
+.opt-btn:hover:not(.revealed){background:#333330!important}
+.sec-bg{background:#232321!important}
+.txt-sec{color:#9a9a96!important}
+.tag-gray{background:#333330!important;color:#9a9a96!important}
+.modal-box{background:#2a2a28!important;border-color:rgba(255,255,255,0.1)!important}
+.btn-ghost{color:#e8e8e4!important;border-color:rgba(255,255,255,0.22)!important}
+.btn-ghost:hover{background:#333330!important}
+input[type=radio],input[type=checkbox]{accent-color:#378ADD}
+}
+.header{background:#fff;border-bottom:1px solid rgba(0,0,0,0.1);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:10}
+.header-title{font-weight:500;font-size:16px}
+.btn-lang{background:#f0f0eb;border:1px solid rgba(0,0,0,0.18);border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit}
+.btn-back{background:none;border:none;cursor:pointer;font-size:14px;color:#666;display:flex;align-items:center;gap:4px;font-family:inherit;padding:0}
+.container{max-width:720px;margin:0 auto;padding:1.5rem 1rem}
+.container-sm{max-width:560px;margin:0 auto;padding:2rem 1rem}
+.card{background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem 1.5rem}
+.progress-bar{height:4px;background:rgba(0,0,0,0.08);border-radius:4px;overflow:hidden;margin-bottom:20px}
+.progress-fill{height:100%;background:#378ADD;border-radius:4px;transition:width .3s}
+.opt-btn{width:100%;display:flex;align-items:flex-start;gap:10px;padding:.75rem 1rem;border:1px solid rgba(0,0,0,0.12);border-radius:8px;cursor:pointer;background:#fff;font-size:14px;color:#1a1a1a;line-height:1.5;text-align:left;font-family:inherit;transition:background .15s,border-color .15s;margin-bottom:8px}
+.opt-btn:hover:not(.revealed){background:#f5f5f0;border-color:rgba(0,0,0,0.22)}
+.opt-btn.correct{border-color:#1D9E75!important;background:#E1F5EE!important}
+.opt-btn.wrong{border-color:#A32D2D!important;background:#FCEBEB!important}
+.opt-btn.missed{border-color:#1D9E75!important;border-style:dashed!important;background:transparent!important}
+.opt-btn.selected-multi{border-color:#378ADD!important;background:#E6F1FB!important}
+.opt-key{font-weight:500;font-size:13px;color:#888;min-width:20px;flex-shrink:0;padding-top:1px}
+.opt-icon{margin-left:auto;flex-shrink:0;font-weight:700;font-size:15px}
+.explain-box{background:#f5f5f0;border:1px solid rgba(0,0,0,0.1);border-radius:8px;padding:1rem 1.25rem;margin-top:12px;font-size:13px;line-height:1.7}
+.explain-correct{color:#0F6E56;font-weight:500;margin-bottom:4px}
+.explain-others-title{font-weight:500;color:#666;font-size:12px;margin-bottom:4px}
+.explain-other{color:#666;margin-bottom:2px;font-size:13px}
+.sec-bg{background:#f5f5f0;border-radius:8px;padding:.6rem .9rem}
+.txt-sec{color:#666;font-size:13px}
+.nav-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px}
+.btn-primary{padding:7px 18px;border:1px solid #378ADD;border-radius:8px;background:#378ADD;color:#fff;font-size:14px;cursor:pointer;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-ghost{padding:6px 14px;border:1px solid rgba(0,0,0,0.2);border-radius:8px;background:transparent;font-size:13px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-danger{border-color:#A32D2D!important;color:#A32D2D!important}
+.btn-outline-primary{border-color:#378ADD!important;color:#378ADD!important}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;margin-left:6px;vertical-align:middle}
+.tag-green{background:#E1F5EE;color:#0F6E56}
+.tag-gray{background:#ebebeb;color:#666}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-box{background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.75rem 1.5rem;max-width:360px;width:90%}
+.modal-title{font-weight:500;font-size:16px;margin-bottom:8px}
+.modal-desc{font-size:14px;color:#666;line-height:1.6;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.result-score{font-size:56px;font-weight:500;text-align:center;margin-bottom:4px}
+.result-label{font-size:18px;font-weight:500;text-align:center;margin-bottom:4px}
+.result-sub{font-size:13px;color:#666;text-align:center;margin-bottom:8px}
+.result-date{font-size:12px;color:#888;text-align:center;margin-bottom:24px}
+.result-stats{display:flex;justify-content:center;gap:40px;margin-bottom:28px}
+.stat-val{font-size:24px;font-weight:500;text-align:center}
+.stat-lbl{font-size:13px;color:#666;text-align:center}
+.review-your{font-size:12px;font-weight:500;color:#666;margin-bottom:6px}
+.review-ans{display:flex;align-items:center;gap:8px;padding:.5rem .9rem;border-radius:8px;font-size:13px;margin-bottom:5px}
+.review-correct-line{border:1px solid #1D9E75;background:#E1F5EE}
+.review-wrong-line{border:1px solid #A32D2D;background:#FCEBEB}
+.review-hint{background:#f5f5f0;border-radius:8px;padding:.75rem 1rem;font-size:13px;line-height:1.7;border-left:3px solid #378ADD;margin-top:4px}
+.multi-hint{font-size:12px;color:#185FA5;font-style:italic;margin-top:6px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" id="header">
+  <div id="header-left"></div>
+  <button class="btn-lang" id="btn-lang" onclick="toggleLang()"></button>
+</div>
+
+<!-- VIEWS -->
+<div id="view-menu"></div>
+<div id="view-exam" class="hidden"></div>
+<div id="view-result" class="hidden"></div>
+<div id="view-review" class="hidden"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modal-cancel" onclick="closeModal()"></button>
+      <button id="modal-confirm"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T={
+en:{title:"AWS CLF-C02 Practice",subtitle:"Cloud Practitioner Exam",selectExam:"Select Exam Set",examSet:"Exam Set",questions:"Questions",completed:"Completed",score:"Score",start:"Start Exam",review:"Review Errors",retake:"Retake",prev:"Prev",next:"Next",check:"Check Answer",submit:"Submit",earlySubmit:"Submit Early",earlySubmitConfirm:"Submit exam now?",earlySubmitDesc:"You have answered {n} of {total} questions. Unanswered questions will be marked wrong.",confirm:"Confirm",cancel:"Cancel",passed:"Passed! 🎉",failed:"Keep Practicing",passMark:"Pass mark: 72%",correctAnswer:"Correct Answer",whyCorrect:"Explanation",whyWrong:"Why other options are wrong",chooseTwo:"Choose TWO answers",selected:"selected",errorReview:"Error Review",noErrors:"No errors — great job!",lang:"中文",backToMenu:"← Back",notStarted:"Not started",perQuestion:"2 pts each",examProgress:"Progress",deleteRecord:"Delete Record",deleteConfirm:"Delete this record?",deleteDesc:"This will permanently remove the score, date, and all error records for this exam set.",takenOn:"Taken on",unanswered:"Not answered",yourAnswerLabel:"Your answer",correctAnswerLabel:"Correct answer",wrongPts:"Wrong pts",totalPts:"Total pts"},
+zh:{title:"AWS CLF-C02 練習題",subtitle:"雲端從業人員認證考試",selectExam:"選擇考卷",examSet:"考卷",questions:"題",completed:"已完成",score:"得分",start:"開始考試",review:"查看錯題",retake:"重新作答",prev:"上一題",next:"下一題",check:"確認答案",submit:"交卷",earlySubmit:"提前交卷",earlySubmitConfirm:"確定要提前交卷嗎？",earlySubmitDesc:"您已作答 {n} / {total} 題，未作答的題目將計為答錯。",confirm:"確認交卷",cancel:"取消",passed:"恭喜通過！🎉",failed:"繼續加油",passMark:"及格線：72%",correctAnswer:"正確答案",whyCorrect:"解析",whyWrong:"其他選項錯誤原因",chooseTwo:"請選擇兩個答案",selected:"已選",errorReview:"錯題回顧",noErrors:"沒有錯題，表現優異！",lang:"English",backToMenu:"← 返回選單",notStarted:"尚未作答",perQuestion:"每題 2 分",examProgress:"作答進度",deleteRecord:"刪除紀錄",deleteConfirm:"確定要刪除此紀錄？",deleteDesc:"這將永久移除此考卷的成績、作答時間及所有錯題紀錄。",takenOn:"作答時間",unanswered:"未作答",yourAnswerLabel:"您的作答",correctAnswerLabel:"正確答案",wrongPts:"答錯分",totalPts:"總分",}
+};
+
+// ── QUESTIONS ─────────────────────────────────────────────────────────────────
+const ALL_QUESTIONS=[
+{id:1,en:{q:"A company plans to use an Amazon Snowball Edge device to transfer files to the AWS Cloud. Which activities are available at no cost?",opts:["Use of the Snowball Edge appliance for a 10-day period","The transfer of data out of Amazon S3 and to the Snowball Edge appliance","The transfer of data from the Snowball Edge appliance into Amazon S3","Daily use of the Snowball Edge appliance after 10 days"],explain:"Data transfer INTO Amazon S3 is always free. AWS charges for device usage and data going OUT of S3, but inbound data transfer to AWS is free.",others:{"A":"AWS charges a daily fee after the first 10 days.","B":"Data out of S3 to Snowball incurs data transfer costs.","D":"Daily usage fees apply after the included 10-day period."}},zh:{q:"一家公司計畫使用 Amazon Snowball Edge 裝置將檔案傳輸到 AWS 雲端。哪些活動是免費的？",opts:["使用 Snowball Edge 裝置 10 天期間","將資料從 Amazon S3 傳出到 Snowball Edge 裝置","將資料從 Snowball Edge 裝置傳入 Amazon S3","10 天後每日使用 Snowball Edge 裝置"],explain:"將資料傳入 Amazon S3 永遠免費。AWS 對裝置使用和資料從 S3 傳出收費，但傳入 AWS 的資料不收費。",others:{"A":"10 天免費期後，AWS 會收取每日費用。","B":"從 S3 傳出資料到 Snowball 會產生資料傳輸費用。","D":"超過 10 天後每日使用會產生費用。"}},correct:[2]},
+{id:2,en:{q:"A company needs to assess application vulnerabilities and identify infrastructure deployments that do not meet best practices. Which AWS service can meet these requirements?",opts:["AWS Trusted Advisor","Amazon Inspector","AWS Config","Amazon GuardDuty"],explain:"Amazon Inspector is an automated vulnerability management service that continuously scans AWS workloads for software vulnerabilities and unintended network exposure.",others:{"A":"Trusted Advisor provides best-practice recommendations but doesn't perform vulnerability scanning.","C":"AWS Config tracks configuration changes but doesn't scan for application vulnerabilities.","D":"GuardDuty detects threats and malicious activity, not application vulnerabilities."}},zh:{q:"一家公司需要評估應用程式漏洞並識別不符合最佳實踐的基礎設施部署。哪個 AWS 服務可以滿足這些需求？",opts:["AWS Trusted Advisor","Amazon Inspector","AWS Config","Amazon GuardDuty"],explain:"Amazon Inspector 是一種自動化漏洞管理服務，可持續掃描 AWS 工作負載的軟體漏洞和意外網路暴露。",others:{"A":"Trusted Advisor 提供最佳實踐建議，但不執行漏洞掃描。","C":"AWS Config 追蹤配置變更，但不掃描應用程式漏洞。","D":"GuardDuty 偵測威脅和惡意活動，而非應用程式漏洞。"}},correct:[1]},
+{id:3,en:{q:"According to security best practices, how should an Amazon EC2 instance be given access to an Amazon S3 bucket?",opts:["Hard code an IAM user's secret key and access key directly in the application","Store the IAM user's secret key and access key in a text file on the EC2 instance","Have the EC2 instance assume a role to obtain the privileges to upload the file","Modify the S3 bucket policy so that any service can upload to it at any time"],explain:"The best practice is to attach an IAM role to the EC2 instance. The instance assumes the role and receives temporary credentials automatically.",others:{"A":"Hardcoding credentials is a major security risk; keys can be exposed in code repositories.","B":"Storing keys in text files on instances is insecure and difficult to rotate.","D":"Making S3 publicly writable by any service is a critical security vulnerability."}},zh:{q:"根據安全最佳實踐，應如何讓 Amazon EC2 執行個體訪問 Amazon S3 儲存桶？",opts:["將 IAM 使用者的金鑰直接硬編碼到應用程式中","將 IAM 使用者金鑰儲存在 EC2 執行個體的文字檔中","讓 EC2 執行個體承擔角色以獲得上傳檔案的權限","修改 S3 儲存桶策略使任何服務都可以隨時上傳"],explain:"最佳實踐是將 IAM 角色附加到 EC2 執行個體，執行個體自動取得臨時憑證，不需要硬編碼金鑰。",others:{"A":"硬編碼憑證是重大安全風險，金鑰可能在程式碼儲存庫中暴露。","B":"將金鑰儲存在執行個體文字檔中不安全且難以輪換。","D":"讓任何服務都可寫入 S3 是嚴重的安全漏洞。"}},correct:[2]},
+{id:4,en:{q:"Which option is a customer responsibility when using Amazon DynamoDB under the AWS Shared Responsibility Model?",opts:["Physical security of DynamoDB","Patching of DynamoDB","Access to DynamoDB tables","Encryption of data at rest in DynamoDB"],explain:"Customers are responsible for managing access to their DynamoDB tables through IAM policies. AWS manages physical security, patching, and provides encryption options.",others:{"A":"AWS is responsible for physical security of its infrastructure.","B":"AWS patches and maintains the DynamoDB service.","D":"AWS provides encryption at rest; management is shared."}},zh:{q:"在 AWS 共享責任模型下，使用 Amazon DynamoDB 時哪個是客戶的責任？",opts:["DynamoDB 的實體安全","DynamoDB 的修補","對 DynamoDB 資料表的訪問控制","DynamoDB 靜態資料加密"],explain:"客戶負責透過 IAM 策略管理對 DynamoDB 資料表的訪問。AWS 負責實體安全、修補並提供加密選項。",others:{"A":"AWS 負責其基礎設施的實體安全。","B":"AWS 負責修補和維護 DynamoDB 服務。","D":"AWS 提供靜態加密；管理是共享的。"}},correct:[2]},
+{id:5,en:{q:"Which option is a perspective that includes foundational capabilities of the AWS Cloud Adoption Framework (AWS CAF)?",opts:["Sustainability","Performance efficiency","Governance","Reliability"],explain:"Governance is one of the six core perspectives of AWS CAF. The six perspectives are: Business, People, Governance, Platform, Security, and Operations.",others:{"A":"Sustainability is a pillar of the Well-Architected Framework, not a CAF perspective.","B":"Performance efficiency is a Well-Architected Framework pillar, not a CAF perspective.","D":"Reliability is a Well-Architected Framework pillar, not a CAF perspective."}},zh:{q:"哪個選項是 AWS 雲端採用框架 (AWS CAF) 的基礎能力觀點？",opts:["永續性","效能效率","治理","可靠性"],explain:"治理是 AWS CAF 六大核心觀點之一。六個觀點為：業務、人員、治理、平台、安全性和營運。",others:{"A":"永續性是 Well-Architected Framework 的支柱，不是 CAF 觀點。","B":"效能效率是 Well-Architected Framework 支柱，不是 CAF 觀點。","D":"可靠性是 Well-Architected Framework 支柱，不是 CAF 觀點。"}},correct:[2]},
+{id:6,en:{q:"A company is running and managing its own Docker environment on Amazon EC2. They want an alternative to manage cluster size, scheduling, and environment maintenance. Which AWS service meets this?",opts:["AWS Lambda","Amazon RDS","AWS Fargate","Amazon Athena"],explain:"AWS Fargate is a serverless compute engine for containers that removes the need to manage the underlying cluster infrastructure.",others:{"A":"Lambda is for serverless functions, not container cluster management.","B":"Amazon RDS is a managed relational database service.","D":"Amazon Athena is a serverless query service for S3 data."}},zh:{q:"一家公司在 Amazon EC2 上運行和管理自己的 Docker 環境。他們想要一個替代方案來管理叢集大小、排程和環境維護。哪個 AWS 服務符合需求？",opts:["AWS Lambda","Amazon RDS","AWS Fargate","Amazon Athena"],explain:"AWS Fargate 是用於容器的無伺服器運算引擎，無需管理底層叢集基礎設施，包括叢集大小和排程。",others:{"A":"Lambda 用於無伺服器函數，不是容器叢集管理。","B":"Amazon RDS 是受管關聯式資料庫服務。","D":"Amazon Athena 是針對 S3 資料的無伺服器查詢服務。"}},correct:[2]},
+{id:7,en:{q:"A company wants to run a NoSQL database on Amazon EC2 instances. Which task is the responsibility of AWS in this scenario?",opts:["Update the guest operating system of the EC2 instances","Maintain high availability at the database layer","Patch the physical infrastructure that hosts the EC2 instances","Configure the security group firewall"],explain:"When running on EC2, AWS is responsible for the physical infrastructure — hardware, networking, and facilities.",others:{"A":"The customer is responsible for patching the guest OS on EC2 instances.","B":"With a self-managed DB on EC2, the customer is responsible for high availability.","D":"Security group configuration is the customer's responsibility."}},zh:{q:"一家公司想在 Amazon EC2 執行個體上運行 NoSQL 資料庫。在此情境中，哪個任務是 AWS 的責任？",opts:["更新 EC2 執行個體的訪客作業系統","在資料庫層維護高可用性","修補託管 EC2 執行個體的實體基礎設施","配置安全群組防火牆"],explain:"在 EC2 上運行時，AWS 負責實體基礎設施 — 硬體、網路和設施。客戶管理從作業系統往上的所有層級。",others:{"A":"客戶負責修補 EC2 執行個體上的訪客作業系統。","B":"在 EC2 上自行管理 DB 時，客戶負責高可用性。","D":"安全群組配置是客戶的責任。"}},correct:[2]},
+{id:8,en:{q:"Which AWS services or tools can identify rightsizing opportunities for Amazon EC2 instances? (Choose TWO)",opts:["AWS Cost Explorer","AWS Billing Conductor","Amazon CodeGuru","Amazon SageMaker","AWS Compute Optimizer"],explain:"AWS Cost Explorer provides rightsizing recommendations based on historical usage. AWS Compute Optimizer analyzes workload metrics and recommends optimal instance types.",others:{"B":"Billing Conductor is for customizing billing structures, not rightsizing.","C":"CodeGuru reviews code quality and performance, not EC2 instance sizing.","D":"SageMaker is for machine learning model building, not EC2 rightsizing."},multi:true},zh:{q:"哪些 AWS 服務或工具可以識別 Amazon EC2 執行個體的適當調整機會？（選擇兩個）",opts:["AWS Cost Explorer","AWS Billing Conductor","Amazon CodeGuru","Amazon SageMaker","AWS Compute Optimizer"],explain:"AWS Cost Explorer 根據歷史使用情況提供適當調整建議。AWS Compute Optimizer 分析工作負載指標並建議最佳執行個體類型。",others:{"B":"Billing Conductor 用於自訂計費結構，不是適當調整。","C":"CodeGuru 審查程式碼品質和效能，不是 EC2 執行個體調整。","D":"SageMaker 用於機器學習模型構建，不是 EC2 適當調整。"},multi:true},correct:[0,4]},
+{id:9,en:{q:"Which of the following are benefits of using AWS Trusted Advisor? (Choose TWO)",opts:["Providing high-performance container orchestration","Creating and rotating encryption keys","Detecting underutilized resources to save costs","Improving security by proactively monitoring the AWS environment","Implementing enforced tagging across AWS resources"],explain:"Trusted Advisor checks for cost optimization opportunities (like underutilized resources) and security vulnerabilities (like open S3 buckets or missing MFA).",others:{"A":"Container orchestration is handled by ECS/EKS, not Trusted Advisor.","B":"Encryption key management is done by AWS KMS.","E":"Tag enforcement is done through AWS Organizations SCPs or AWS Config rules."},multi:true},zh:{q:"以下哪些是使用 AWS Trusted Advisor 的好處？（選擇兩個）",opts:["提供高效能容器編排","建立和輪換加密金鑰","偵測未充分利用的資源以節省成本","透過主動監控 AWS 環境來改善安全性","在 AWS 資源中實施強制標記"],explain:"Trusted Advisor 檢查成本優化機會（如未充分利用的資源）和安全漏洞（如開放的 S3 儲存桶或缺少 MFA）。",others:{"A":"容器編排由 ECS/EKS 處理，不是 Trusted Advisor。","B":"加密金鑰管理由 AWS KMS 完成。","E":"標記強制執行透過 AWS Organizations SCP 或 AWS Config 規則完成。"},multi:true},correct:[2,3]},
+{id:10,en:{q:"Which of the following is an advantage that users experience when they move on-premises workloads to the AWS Cloud?",opts:["Elimination of expenses for running and maintaining data centers","Price discounts that are identical to discounts from hardware providers","Distribution of all operational controls to AWS","Elimination of operational expenses"],explain:"Moving to AWS eliminates capital expenditures for physical data centers — power, cooling, hardware maintenance, and facilities costs all go away.",others:{"B":"AWS pricing is based on economies of scale, not hardware provider discounts.","C":"Customers retain operational controls; AWS manages the infrastructure layer.","D":"Operational expenses still exist in the cloud; they shift from capital to variable costs."}},zh:{q:"使用者將本地工作負載移到 AWS 雲端後可以體驗到哪個優勢？",opts:["消除運行和維護資料中心的費用","與硬體提供商折扣相同的價格折扣","將所有營運控制分配給 AWS","消除營運費用"],explain:"遷移到 AWS 可消除實體資料中心的資本支出——電力、冷卻、硬體維護和設施成本都會消失。",others:{"B":"AWS 定價基於規模經濟，而非硬體提供商折扣。","C":"客戶保留營運控制；AWS 管理基礎設施層。","D":"雲端中仍存在營運費用；它們從資本支出轉變為可變成本。"}},correct:[0]},
+{id:11,en:{q:"A company wants to manage deployed IT services and govern its infrastructure as code (IaC) templates. Which AWS service will meet this requirement?",opts:["AWS Resource Explorer","AWS Service Catalog","AWS Organizations","AWS Systems Manager"],explain:"AWS Service Catalog allows organizations to create and manage approved IT services portfolios, helping teams govern which IaC templates are used in deployments.",others:{"A":"Resource Explorer helps discover and search for AWS resources, not govern templates.","C":"Organizations manages multiple AWS accounts, not IT service templates.","D":"Systems Manager helps manage and automate operations, not govern service templates."}},zh:{q:"一家公司想要管理已部署的 IT 服務並治理其基礎設施即程式碼 (IaC) 模板。哪個 AWS 服務可以滿足此需求？",opts:["AWS Resource Explorer","AWS Service Catalog","AWS Organizations","AWS Systems Manager"],explain:"AWS Service Catalog 允許組織建立和管理已核准的 IT 服務組合，幫助團隊治理在部署中使用哪些 IaC 模板。",others:{"A":"Resource Explorer 幫助探索和搜索 AWS 資源，不是治理模板。","C":"Organizations 管理多個 AWS 帳戶，不是 IT 服務模板。","D":"Systems Manager 幫助管理和自動化操作，不是治理服務模板。"}},correct:[1]},
+{id:12,en:{q:"Which AWS service or tool helps users visualize, understand, and manage spending and usage over time?",opts:["AWS Organizations","AWS Pricing Calculator","AWS Cost Explorer","AWS Service Catalog"],explain:"AWS Cost Explorer provides interactive graphs and reports to visualize historical cost and usage data, identify trends, and forecast future spend.",others:{"A":"Organizations manages multiple accounts but doesn't provide cost visualization.","B":"Pricing Calculator estimates future costs for planned infrastructure, not historical analysis.","D":"Service Catalog manages IT service portfolios, not cost visualization."}},zh:{q:"哪個 AWS 服務或工具幫助使用者隨時間視覺化、理解和管理支出和使用情況？",opts:["AWS Organizations","AWS Pricing Calculator","AWS Cost Explorer","AWS Service Catalog"],explain:"AWS Cost Explorer 提供互動式圖表和報告，用於視覺化歷史成本和使用資料、識別趨勢並預測未來支出。",others:{"A":"Organizations 管理多個帳戶，但不提供成本視覺化。","B":"Pricing Calculator 估算計畫基礎設施的未來成本，不是歷史分析。","D":"Service Catalog 管理 IT 服務組合，不是成本視覺化。"}},correct:[2]},
+{id:13,en:{q:"A company wants to discover, transform, and visualize data using AWS services. Which combination should they use? (Choose TWO)",opts:["AWS Glue","Amazon Elastic File System (EFS)","Amazon Redshift","Amazon QuickSight","Amazon QLDB"],explain:"AWS Glue is a serverless ETL service for discovering and transforming data. Amazon QuickSight is a BI service for visualizing and gaining insights from data.",others:{"B":"EFS is a managed file system, not a data analytics or visualization tool.","C":"Redshift is a data warehouse for analytics, but doesn't directly provide visualization.","E":"QLDB is a ledger database for immutable transaction records."},multi:true},zh:{q:"一家公司想使用 AWS 服務來探索、轉換和視覺化資料。應使用哪種組合？（選擇兩個）",opts:["AWS Glue","Amazon Elastic File System (EFS)","Amazon Redshift","Amazon QuickSight","Amazon QLDB"],explain:"AWS Glue 是用於探索和轉換資料的無伺服器 ETL 服務。Amazon QuickSight 是用於視覺化和獲取資料洞察的 BI 服務。",others:{"B":"EFS 是受管檔案系統，不是資料分析或視覺化工具。","C":"Redshift 是用於分析的資料倉儲，但不直接提供視覺化。","E":"QLDB 是用於不可變交易記錄的帳本資料庫。"},multi:true},correct:[0,3]},
+{id:14,en:{q:"A global company wants help from a global team of experts to migrate to AWS faster in accordance with AWS internal best practices. Which resource will meet this?",opts:["AWS Support","AWS Professional Services","AWS Launch Wizard","AWS Managed Services (AMS)"],explain:"AWS Professional Services is a global team of AWS experts who work alongside customers and partners to help migrate workloads using AWS best practices.",others:{"A":"AWS Support provides technical support but not migration consulting engagements.","C":"Launch Wizard helps deploy specific workloads but is not a consulting engagement.","D":"AMS provides ongoing operational management of AWS infrastructure after migration."}},zh:{q:"一家全球公司希望得到全球專家團隊的幫助，根據 AWS 內部最佳實踐更快地遷移到 AWS。哪個資源可以滿足此需求？",opts:["AWS Support","AWS Professional Services","AWS Launch Wizard","AWS Managed Services (AMS)"],explain:"AWS Professional Services 是 AWS 專家的全球團隊，與客戶和合作夥伴合作，使用 AWS 最佳實踐幫助遷移工作負載。",others:{"A":"AWS Support 提供技術支援，但不提供遷移諮詢服務。","C":"Launch Wizard 幫助部署特定工作負載，但不是諮詢服務。","D":"AMS 在遷移後提供持續的 AWS 基礎設施營運管理。"}},correct:[1]},
+{id:15,en:{q:"An e-learning platform needs to run an application for 2 months each year. Any application downtime must be avoided. Which EC2 purchasing option is MOST cost-effective?",opts:["Reserved Instances","Dedicated Hosts","Spot Instances","On-Demand Instances"],explain:"On-Demand Instances are ideal for short-term workloads (2 months/year) that cannot be interrupted. Reserved Instances require 1–3 year commitments which would be wasteful.",others:{"A":"Reserved Instances require a 1 or 3-year commitment, making them too costly for 2-month usage.","B":"Dedicated Hosts are for licensing requirements and are more expensive.","C":"Spot Instances can be interrupted at any time, which violates the no-downtime requirement."}},zh:{q:"一個電子學習平台每年需要運行應用程式 2 個月。必須避免任何應用程式停機。哪個 EC2 購買選項最具成本效益？",opts:["預留執行個體","專用主機","競價執行個體","隨需執行個體"],explain:"隨需執行個體非常適合無法中斷的短期工作負載（每年 2 個月）。預留執行個體需要 1-3 年承諾，這樣會浪費費用。",others:{"A":"預留執行個體需要 1 年或 3 年承諾，對於 2 個月的使用來說費用過高。","B":"專用主機用於授權要求，費用更高。","C":"競價執行個體可以隨時中斷，違反了無停機要求。"}},correct:[3]},
+{id:16,en:{q:"A developer wants to deploy an application quickly on AWS without manually creating the required resources. Which AWS service will meet this?",opts:["Amazon EC2","AWS Elastic Beanstalk","AWS CodeBuild","Amazon Personalize"],explain:"AWS Elastic Beanstalk automatically handles deployment details like capacity provisioning, load balancing, auto-scaling, and application health monitoring.",others:{"A":"EC2 requires manual setup of infrastructure components.","C":"CodeBuild is a CI/CD build service, not an application deployment service.","D":"Personalize is a machine learning service for recommendations."}},zh:{q:"一位開發人員想要在 AWS 上快速部署應用程式，而不需要手動建立所需資源。哪個 AWS 服務可以滿足此需求？",opts:["Amazon EC2","AWS Elastic Beanstalk","AWS CodeBuild","Amazon Personalize"],explain:"AWS Elastic Beanstalk 自動處理部署詳情，如容量佈建、負載均衡、自動擴展和應用程式健康監控。",others:{"A":"EC2 需要手動設定基礎設施元件。","C":"CodeBuild 是 CI/CD 構建服務，不是應用程式部署服務。","D":"Personalize 是用於推薦的機器學習服務。"}},correct:[1]},
+{id:17,en:{q:"A company wants to protect data in Amazon S3 from accidental deletion or overwriting. Which S3 feature should they use?",opts:["S3 Lifecycle rules","S3 Versioning","S3 bucket policies","S3 server-side encryption"],explain:"S3 Versioning preserves, retrieves, and restores every version of every object. If an object is deleted or overwritten, a previous version can be recovered.",others:{"A":"Lifecycle rules automatically transition or expire objects but don't prevent deletion.","C":"Bucket policies control access permissions but don't prevent accidental overwriting.","D":"Encryption protects data confidentiality, not from accidental deletion."}},zh:{q:"一家公司想要保護 Amazon S3 中的資料免受意外刪除或覆寫。他們應該使用哪個 S3 功能？",opts:["S3 生命週期規則","S3 版本控制","S3 儲存桶策略","S3 伺服器端加密"],explain:"S3 版本控制可保留、擷取和還原每個物件的每個版本。如果物件被刪除或覆寫，可以恢復先前的版本。",others:{"A":"生命週期規則自動轉換或過期物件，但不防止刪除。","C":"儲存桶策略控制訪問權限，但不防止意外覆寫。","D":"加密保護資料機密性，不是防止意外刪除。"}},correct:[1]},
+{id:18,en:{q:"Which AWS service provides the ability to manage infrastructure as code?",opts:["AWS CodePipeline","AWS CodeDeploy","AWS Direct Connect","AWS CloudFormation"],explain:"AWS CloudFormation lets you model and provision AWS infrastructure resources using JSON or YAML templates — the core IaC service on AWS.",others:{"A":"CodePipeline is a CI/CD pipeline service, not an IaC tool.","B":"CodeDeploy automates application deployments, not infrastructure provisioning.","C":"Direct Connect provides dedicated network connectivity from on-premises to AWS."}},zh:{q:"哪個 AWS 服務提供管理基礎設施即程式碼的能力？",opts:["AWS CodePipeline","AWS CodeDeploy","AWS Direct Connect","AWS CloudFormation"],explain:"AWS CloudFormation 讓您使用 JSON 或 YAML 模板建模和佈建 AWS 基礎設施資源，是 AWS 的核心 IaC 服務。",others:{"A":"CodePipeline 是 CI/CD 流水線服務，不是 IaC 工具。","B":"CodeDeploy 自動化應用程式部署，不是基礎設施佈建。","C":"Direct Connect 提供從本地到 AWS 的專用網路連接。"}},correct:[3]},
+{id:19,en:{q:"An online gaming company needs EC2 instances for 1 year with consistent, predictable traffic. Instances must stay online without disruption. Which EC2 purchasing option is MOST cost-effective?",opts:["On-Demand Instances","Reserved Instances","Spot Instances","Spot Fleet"],explain:"Reserved Instances offer up to 72% discount compared to On-Demand for steady, predictable workloads with a 1-year commitment. They cannot be interrupted.",others:{"A":"On-Demand is more expensive for long-running predictable workloads.","C":"Spot Instances can be interrupted, which is unacceptable for gaming servers.","D":"Spot Fleet manages Spot Instances which can still be interrupted."}},zh:{q:"一家線上遊戲公司需要 EC2 執行個體運行 1 年，流量持續且可預測。執行個體必須保持在線不中斷。哪個 EC2 購買選項最具成本效益？",opts:["隨需執行個體","預留執行個體","競價執行個體","競價執行個體群"],explain:"對於有 1 年承諾的穩定可預測工作負載，預留執行個體提供高達 72% 的折扣。它們不能被中斷。",others:{"A":"對於長期運行的可預測工作負載，隨需費用更高。","C":"競價執行個體可以被中斷，這對遊戲伺服器不可接受。","D":"競價執行個體群管理仍可被中斷的競價執行個體。"}},correct:[1]},
+{id:20,en:{q:"Which AWS service or feature allows a user to establish a dedicated network connection between a company's on-premises data center and the AWS Cloud?",opts:["AWS Direct Connect","VPC peering","AWS VPN","Amazon Route 53"],explain:"AWS Direct Connect provides a dedicated, private network connection from your data center to AWS, bypassing the public internet for consistent performance.",others:{"B":"VPC peering connects two VPCs within AWS, not on-premises to cloud.","C":"AWS VPN creates an encrypted tunnel over the public internet, not a dedicated connection.","D":"Route 53 is a DNS service, not a network connectivity solution."}},zh:{q:"哪個 AWS 服務或功能允許使用者在公司的本地資料中心和 AWS 雲端之間建立專用網路連接？",opts:["AWS Direct Connect","VPC 對等連接","AWS VPN","Amazon Route 53"],explain:"AWS Direct Connect 提供從資料中心到 AWS 的專用私有網路連接，繞過公共網際網路以獲得一致的效能。",others:{"B":"VPC 對等連接在 AWS 內連接兩個 VPC，不是本地到雲端。","C":"AWS VPN 透過公共網際網路建立加密隧道，不是專用連接。","D":"Route 53 是 DNS 服務，不是網路連接解決方案。"}},correct:[0]},
+{id:21,en:{q:"Which option is a physical location of the AWS global infrastructure?",opts:["AWS DataSync","AWS Region","Amazon Connect","AWS Organizations"],explain:"An AWS Region is a physical geographic area around the world where AWS has multiple data centers called Availability Zones.",others:{"A":"DataSync is a data transfer service, not a physical location.","C":"Amazon Connect is a cloud contact center service.","D":"Organizations is an account management service."}},zh:{q:"哪個選項是 AWS 全球基礎設施的實體位置？",opts:["AWS DataSync","AWS 區域","Amazon Connect","AWS Organizations"],explain:"AWS 區域是全球各地的實體地理區域，AWS 在這些區域擁有多個稱為可用區的資料中心。",others:{"A":"DataSync 是資料傳輸服務，不是實體位置。","C":"Amazon Connect 是雲端客服中心服務。","D":"Organizations 是帳戶管理服務。"}},correct:[1]},
+{id:22,en:{q:"A company wants to protect its AWS Cloud information and assets while performing risk assessment and mitigation. Which pillar of the AWS Well-Architected Framework is supported?",opts:["Reliability","Security","Operational excellence","Performance efficiency"],explain:"The Security pillar covers protecting information, systems, and assets, including risk assessment, threat mitigation, and implementing security controls.",others:{"A":"Reliability focuses on system recovery and availability, not security.","C":"Operational excellence focuses on running and monitoring systems effectively.","D":"Performance efficiency focuses on using computing resources efficiently."}},zh:{q:"一家公司在執行風險評估和緩解任務時，想要保護其 AWS 雲端資訊、系統和資產。支援 AWS Well-Architected Framework 的哪個支柱？",opts:["可靠性","安全性","卓越營運","效能效率"],explain:"安全性支柱涵蓋保護資訊、系統和資產，包括風險評估、威脅緩解和實施安全控制。",others:{"A":"可靠性關注系統恢復和可用性，不是安全性。","C":"卓越營運關注有效運行和監控系統。","D":"效能效率關注有效使用運算資源。"}},correct:[1]},
+{id:23,en:{q:"What is the purpose of having an internet gateway within a VPC?",opts:["To create a VPN connection to the VPC","To allow communication between the VPC and the internet","To impose bandwidth constraints on internet traffic","To load balance traffic from the internet across Amazon EC2 instances"],explain:"An internet gateway is a horizontally scaled, redundant VPC component that enables communication between your VPC and the internet.",others:{"A":"VPN connections use a virtual private gateway, not an internet gateway.","C":"Internet gateways don't impose bandwidth limits; that's done with other tools.","D":"Load balancing is done by Elastic Load Balancing, not the internet gateway."}},zh:{q:"在 VPC 中擁有網際網路閘道的目的是什麼？",opts:["為 VPC 建立 VPN 連接","允許 VPC 和網際網路之間的通訊","對網際網路流量施加頻寬限制","在 Amazon EC2 執行個體之間平衡網際網路流量"],explain:"網際網路閘道是水平擴展的冗餘 VPC 元件，可讓 VPC 與網際網路之間進行通訊。",others:{"A":"VPN 連接使用虛擬私有閘道，不是網際網路閘道。","C":"網際網路閘道不施加頻寬限制；那是由其他工具完成的。","D":"負載均衡由 Elastic Load Balancing 完成，不是網際網路閘道。"}},correct:[1]},
+{id:24,en:{q:"A company plans to migrate its monolithic app to AWS and divide it into microservices. Which best practice of the AWS Well-Architected Framework is the company following?",opts:["Integrate functional testing as part of AWS deployment","Use automation to deploy changes","Deploy the application to multiple locations","Implement loosely coupled dependencies"],explain:"Breaking a monolith into microservices implements loose coupling — each service operates independently, reducing the blast radius of failures.",others:{"A":"Functional testing integration is an operational excellence principle, not related to microservices architecture.","B":"Automation is also operational excellence — not the core reason for microservices.","C":"Multi-location deployment is about reliability, separate from the microservices pattern."}},zh:{q:"一家公司計畫將其單體應用程式遷移到 AWS 並將其劃分為微服務。該公司遵循了 AWS Well-Architected Framework 的哪個最佳實踐？",opts:["將功能測試整合為 AWS 部署的一部分","使用自動化部署變更","將應用程式部署到多個位置","實施鬆散耦合的依賴關係"],explain:"將單體架構拆分為微服務實施了鬆散耦合——每個服務獨立運行，減少故障影響範圍並實現獨立擴展。",others:{"A":"功能測試整合是卓越營運原則，與微服務架構無關。","B":"自動化也是卓越營運——不是微服務的核心原因。","C":"多位置部署關係到可靠性，與微服務模式分開。"}},correct:[3]},
+{id:25,en:{q:"A company wants to audit its password and access key rotation details for compliance. Which AWS service or tool will meet this?",opts:["IAM Access Analyzer","AWS Artifact","IAM credential report","AWS Audit Manager"],explain:"IAM credential reports list all IAM users and the status of their credentials — password age, last used, access key age, rotation dates.",others:{"A":"IAM Access Analyzer identifies resources shared externally, not credential rotation details.","B":"AWS Artifact provides compliance documentation from AWS, not account-specific reports.","D":"Audit Manager helps automate audit evidence collection but uses the credential report as a source."}},zh:{q:"一家公司想要審計其密碼和訪問金鑰輪換詳情以滿足合規要求。哪個 AWS 服務或工具可以滿足此需求？",opts:["IAM Access Analyzer","AWS Artifact","IAM 憑證報告","AWS Audit Manager"],explain:"IAM 憑證報告列出所有 IAM 使用者及其憑證狀態——密碼年齡、最後使用時間、訪問金鑰年齡、輪換日期——非常適合合規審計。",others:{"A":"IAM Access Analyzer 識別外部共享的資源，不是憑證輪換詳情。","B":"AWS Artifact 提供來自 AWS 的合規文件，不是帳戶特定報告。","D":"Audit Manager 幫助自動化審計證據收集，但使用憑證報告作為來源。"}},correct:[2]},
+{id:26,en:{q:"A company wants to receive a notification when a specific AWS cost threshold is reached. Which AWS services or tools can meet this? (Choose TWO)",opts:["Amazon SQS","AWS Budgets","Cost Explorer","Amazon CloudWatch","AWS Cost and Usage Report"],explain:"AWS Budgets can send alerts when actual or forecasted costs exceed thresholds. Amazon CloudWatch can create billing alarms that trigger notifications via SNS.",others:{"A":"SQS is a message queuing service, not a cost alerting service.","C":"Cost Explorer visualizes costs but doesn't send threshold notifications.","E":"Cost and Usage Reports export raw data; they don't send threshold notifications."},multi:true},zh:{q:"一家公司想要在達到特定 AWS 成本閾值時收到通知。哪些 AWS 服務或工具可以滿足此需求？（選擇兩個）",opts:["Amazon SQS","AWS Budgets","Cost Explorer","Amazon CloudWatch","AWS 成本和使用情況報告"],explain:"AWS Budgets 可以在實際或預測成本超過閾值時發送警報。Amazon CloudWatch 可以建立計費警報，透過 SNS 觸發通知。",others:{"A":"SQS 是消息佇列服務，不是成本警報服務。","C":"Cost Explorer 視覺化成本，但不發送閾值通知。","E":"成本和使用情況報告匯出原始資料；它們不發送閾值通知。"},multi:true},correct:[1,3]},
+{id:27,en:{q:"Which tasks are customer responsibilities according to the AWS shared responsibility model? (Choose TWO)",opts:["Configure the AWS provided security group firewall","Classify company assets in the AWS Cloud","Determine which Availability Zones to use for Amazon S3","Patch or upgrade Amazon DynamoDB","Select Amazon EC2 instances to run AWS Lambda on"],explain:"Customers are responsible for configuring security groups and classifying/managing their own data and assets in the cloud.",others:{"C":"AWS manages S3's redundancy across AZs automatically.","D":"AWS manages all patching for fully managed services like DynamoDB.","E":"Lambda is serverless — customers don't select underlying EC2 instances."},multi:true},zh:{q:"根據 AWS 共享責任模型，哪些任務是客戶的責任？（選擇兩個）",opts:["配置 AWS 提供的安全群組防火牆","對 AWS 雲端中的公司資產進行分類","確定 Amazon S3 儲存桶使用哪些可用區","修補或升級 Amazon DynamoDB","選擇 Amazon EC2 執行個體以運行 AWS Lambda"],explain:"客戶負責配置安全群組（其執行個體的防火牆規則）和分類/管理雲端中自己的資料和資產。",others:{"C":"AWS 自動管理跨可用區的 S3 冗餘。","D":"AWS 管理 DynamoDB 等完全受管服務的所有修補。","E":"Lambda 是無伺服器的——客戶不選擇底層 EC2 執行個體。"},multi:true},correct:[0,1]},
+{id:28,en:{q:"Which of the following are pillars of the AWS Well-Architected Framework? (Choose TWO)",opts:["Availability","Reliability","Scalability","Responsive design","Operational excellence"],explain:"The 6 pillars of the Well-Architected Framework are: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability.",others:{"A":"Availability is a concept but not one of the 6 official pillars.","C":"Scalability is a feature of cloud computing, not a Well-Architected pillar.","D":"Responsive design is a web design concept, not a Well-Architected pillar."},multi:true},zh:{q:"以下哪些是 AWS Well-Architected Framework 的支柱？（選擇兩個）",opts:["可用性","可靠性","可擴展性","響應式設計","卓越營運"],explain:"Well-Architected Framework 的 6 個支柱為：卓越營運、安全性、可靠性、效能效率、成本優化和永續性。",others:{"A":"可用性是一個概念，但不是 6 個官方支柱之一。","C":"可擴展性是雲端運算的特性，不是 Well-Architected 支柱。","D":"響應式設計是網頁設計概念，不是 Well-Architected 支柱。"},multi:true},correct:[1,4]},
+{id:29,en:{q:"Which AWS service is used to send both text and email messages from distributed applications?",opts:["Amazon SNS","Amazon SES","Amazon CloudWatch alerts","Amazon SQS"],explain:"Amazon SNS is a fully managed pub/sub messaging service that supports sending messages to multiple subscribers, including both SMS text messages and email.",others:{"B":"SES is specifically for sending high-volume emails only, not SMS text messages.","C":"CloudWatch alerts use SNS to deliver notifications, they don't send messages themselves.","D":"SQS is a message queue for decoupling application components, not for sending user notifications."}},zh:{q:"哪個 AWS 服務用於從分散式應用程式發送簡訊和電子郵件訊息？",opts:["Amazon SNS","Amazon SES","Amazon CloudWatch 警報","Amazon SQS"],explain:"Amazon SNS 是完全受管的發布/訂閱訊息服務，支援向多個訂閱者發送訊息，包括 SMS 簡訊和電子郵件。",others:{"B":"SES 專門用於發送大量電子郵件，不發送 SMS 簡訊。","C":"CloudWatch 警報使用 SNS 傳遞通知，它們本身不發送訊息。","D":"SQS 是用於解耦應用程式元件的訊息佇列，不用於發送使用者通知。"}},correct:[0]},
+{id:30,en:{q:"A user needs programmatic access to AWS resources through the AWS CLI or the AWS API. Which option will provide the user with the appropriate access?",opts:["Amazon Inspector","Access keys","SSH public keys","AWS KMS keys"],explain:"Access keys (an access key ID and secret access key) are required for programmatic access to AWS services via the CLI or API.",others:{"A":"Amazon Inspector is a vulnerability scanning service, not an access management tool.","C":"SSH public keys are used for logging into EC2 instances, not for AWS API/CLI access.","D":"AWS KMS keys are used for encryption, not for authenticating to the AWS API."}},zh:{q:"使用者需要透過 AWS CLI 或 AWS API 以程式方式訪問 AWS 資源。哪個選項將為使用者提供適當的訪問？",opts:["Amazon Inspector","存取金鑰","SSH 公鑰","AWS KMS 金鑰"],explain:"存取金鑰（存取金鑰 ID 和私密存取金鑰）是透過 CLI 或 API 以程式方式訪問 AWS 服務所必需的。",others:{"A":"Amazon Inspector 是漏洞掃描服務，不是訪問管理工具。","C":"SSH 公鑰用於登入 EC2 執行個體，不用於 AWS API/CLI 訪問。","D":"AWS KMS 金鑰用於加密，不用於對 AWS API 進行身份驗證。"}},correct:[1]},
+{id:31,en:{q:"A company runs thousands of simultaneous simulations using AWS Batch. Each simulation is stateless, fault tolerant, and runs for up to 3 hours. Which pricing model enables the company to optimize costs?",opts:["Reserved Instances","Spot Instances","On-Demand Instances","Dedicated Instances"],explain:"Spot Instances are ideal for stateless, fault-tolerant batch workloads. They offer up to 90% discount and AWS Batch automatically handles interruptions.",others:{"A":"Reserved Instances require upfront commitment and are for steady, predictable workloads.","C":"On-Demand is more expensive for large-scale batch processing.","D":"Dedicated Instances are for compliance/licensing requirements and cost more."}},zh:{q:"一家公司使用 AWS Batch 同時運行數千個模擬。每個模擬都是無狀態的、容錯的，且運行時間最長 3 小時。哪種定價模式能讓公司優化成本？",opts:["預留執行個體","競價執行個體","隨需執行個體","專用執行個體"],explain:"競價執行個體非常適合無狀態、容錯的批次工作負載。它們提供高達 90% 的折扣，AWS Batch 透過重試作業自動處理中斷。",others:{"A":"預留執行個體需要預先承諾，適用於穩定、可預測的工作負載。","C":"對於大規模批次處理，隨需費用更高。","D":"專用執行個體用於合規/授權要求，費用更高。"}},correct:[1]},
+{id:32,en:{q:"What does the concept of agility mean in AWS Cloud computing? (Choose TWO)",opts:["The speed at which AWS resources are implemented","The speed at which AWS creates new AWS Regions","The ability to experiment quickly","The elimination of wasted capacity","The low cost of entry into cloud computing"],explain:"Agility in AWS means the ability to rapidly provision resources (speed of implementation) and the ability to experiment quickly with minimal cost or risk.",others:{"B":"Region creation speed is infrastructure planning, not a customer agility concept.","D":"Eliminating wasted capacity is about elasticity/efficiency, not agility.","E":"Low entry cost relates to economies of scale, not the concept of agility."},multi:true},zh:{q:"在 AWS 雲端運算中，敏捷性的概念是什麼？（選擇兩個）",opts:["實施 AWS 資源的速度","AWS 建立新 AWS 區域的速度","快速實驗的能力","消除浪費的容量","進入雲端運算的低成本"],explain:"AWS 中的敏捷性意味著快速佈建資源的能力（實施速度）和以最低成本或風險快速實驗的能力。",others:{"B":"區域建立速度是基礎設施規劃，不是客戶敏捷性概念。","D":"消除浪費的容量關係到彈性/效率，不是敏捷性。","E":"低進入成本與規模經濟有關，不是敏捷性概念。"},multi:true},correct:[0,2]},
+{id:33,en:{q:"A company needs to block SQL injection attacks. Which AWS service or feature can meet this requirement?",opts:["AWS WAF","AWS Shield","Network ACLs","Security groups"],explain:"AWS WAF (Web Application Firewall) can filter web traffic based on rules that detect and block common web exploits like SQL injection and cross-site scripting.",others:{"B":"AWS Shield protects against DDoS attacks, not application-layer attacks like SQL injection.","C":"Network ACLs operate at the network layer and cannot inspect HTTP content for SQL injection.","D":"Security groups operate at the instance level for IP/port filtering, not application-layer attack detection."}},zh:{q:"一家公司需要阻止 SQL 注入攻擊。哪個 AWS 服務或功能可以滿足此需求？",opts:["AWS WAF","AWS Shield","網路 ACL","安全群組"],explain:"AWS WAF（網路應用程式防火牆）可以根據規則過濾網路流量，偵測和阻止常見的網路漏洞，如 SQL 注入和跨站點腳本。",others:{"B":"AWS Shield 防護 DDoS 攻擊，不是 SQL 注入等應用層攻擊。","C":"網路 ACL 在網路層操作，無法檢查 HTTP 內容中的 SQL 注入。","D":"安全群組在執行個體層級進行 IP/連接埠過濾，不是應用層攻擊偵測。"}},correct:[0]},
+{id:34,en:{q:"Which AWS service or feature identifies whether an Amazon S3 bucket or an IAM role has been shared with an external entity?",opts:["AWS Service Catalog","AWS Systems Manager","AWS IAM Access Analyzer","AWS Organizations"],explain:"IAM Access Analyzer analyzes resource policies to identify resources (S3 buckets, IAM roles, KMS keys, etc.) that are shared with external entities outside your AWS account.",others:{"A":"Service Catalog manages IT service portfolios, not resource sharing analysis.","B":"Systems Manager automates operations tasks, not resource sharing analysis.","D":"Organizations manages multiple AWS accounts but doesn't analyze resource sharing."}},zh:{q:"哪個 AWS 服務或功能識別 Amazon S3 儲存桶或 IAM 角色是否已與外部實體共享？",opts:["AWS Service Catalog","AWS Systems Manager","AWS IAM Access Analyzer","AWS Organizations"],explain:"IAM Access Analyzer 分析資源策略，以識別與 AWS 帳戶外部實體共享的資源（S3 儲存桶、IAM 角色、KMS 金鑰等）。",others:{"A":"Service Catalog 管理 IT 服務組合，不是資源共享分析。","B":"Systems Manager 自動化操作任務，不是資源共享分析。","D":"Organizations 管理多個 AWS 帳戶，但不分析資源共享。"}},correct:[2]},
+{id:35,en:{q:"A cloud practitioner needs to obtain AWS compliance reports before migrating to the AWS Cloud. How can these reports be generated?",opts:["Contact the AWS Compliance team","Download the reports from AWS Artifact","Open a case with AWS Support","Generate the reports with Amazon Macie"],explain:"AWS Artifact is a self-service portal for on-demand access to AWS compliance reports, including SOC reports, PCI DSS, ISO certifications, and more.",others:{"A":"There is no direct 'AWS Compliance team' contact for report downloads; Artifact is the self-service option.","C":"Opening a support case is unnecessary; Artifact provides self-service access.","D":"Amazon Macie discovers and protects sensitive data in S3; it doesn't generate compliance reports."}},zh:{q:"雲端從業人員需要在遷移到 AWS 雲端之前獲取 AWS 合規報告。如何生成這些報告？",opts:["聯繫 AWS 合規團隊","從 AWS Artifact 下載報告","向 AWS Support 提交案例","使用 Amazon Macie 生成報告"],explain:"AWS Artifact 是一個自助服務門戶，可按需訪問 AWS 合規報告，包括 SOC 報告、PCI DSS、ISO 認證等。",others:{"A":"沒有直接的「AWS 合規團隊」聯繫方式用於報告下載；Artifact 是自助服務選項。","C":"無需提交支援案例；Artifact 提供自助服務訪問。","D":"Amazon Macie 在 S3 中發現和保護敏感資料；它不生成合規報告。"}},correct:[1]},
+{id:36,en:{q:"An ecommerce company migrated its IT infrastructure from on-premises to the AWS Cloud. Which cost is the company's direct responsibility?",opts:["Cost of application software licenses","Cost of the hardware infrastructure on AWS","Cost of power for the AWS servers","Cost of physical security for the AWS data center"],explain:"Application software licenses are the customer's direct responsibility. AWS is responsible for hardware, power, and physical security of its infrastructure.",others:{"B":"AWS bears the cost of its own hardware infrastructure.","C":"AWS pays for power consumed by its servers in its data centers.","D":"AWS is responsible for all physical security costs at its data centers."}},zh:{q:"一家電子商務公司已將其 IT 基礎設施從本地資料中心遷移到 AWS 雲端。哪個成本是公司直接負責的？",opts:["應用程式軟體授權費用","AWS 硬體基礎設施費用","AWS 伺服器電力費用","AWS 資料中心實體安全費用"],explain:"應用程式軟體授權是客戶的直接責任。AWS 負責其基礎設施的硬體、電力和實體安全。",others:{"B":"AWS 承擔其自身硬體基礎設施的費用。","C":"AWS 支付其資料中心伺服器消耗的電力費用。","D":"AWS 負責其資料中心的所有實體安全費用。"}},correct:[0]},
+{id:37,en:{q:"A company is setting up IAM on an AWS account. Which recommendation complies with IAM security best practices?",opts:["Use the account root user access keys for administrative tasks","Grant broad permissions so all employees can access needed resources","Turn on multi-factor authentication (MFA) for added security during login","Avoid rotating credentials to prevent issues in production applications"],explain:"Enabling MFA adds an extra layer of security beyond just a password. It is one of the most important IAM security best practices.",others:{"A":"Root user access keys should never be created or used; use IAM users or roles instead.","B":"The principle of least privilege requires granting only the minimum permissions needed.","D":"Credentials should be rotated regularly to reduce the risk from compromised keys."}},zh:{q:"一家公司正在 AWS 帳戶上設定 IAM。哪個建議符合 IAM 安全最佳實踐？",opts:["使用帳戶根使用者存取金鑰執行管理任務","授予廣泛權限使所有員工都能訪問所需資源","在登入過程中開啟多重要素驗證 (MFA) 以增加安全性","避免輪換憑證以防止生產應用程式出現問題"],explain:"啟用 MFA 在密碼之外增加了一個額外的安全層。這是最重要的 IAM 安全最佳實踐之一。",others:{"A":"絕不應建立或使用根使用者存取金鑰；改用 IAM 使用者或角色。","B":"最小權限原則要求僅授予所需的最低權限。","D":"應定期輪換憑證，以降低憑證洩露的風險。"}},correct:[2]},
+{id:38,en:{q:"Elasticity in the AWS Cloud refers to which of the following? (Choose TWO)",opts:["How quickly an Amazon EC2 instance can be restarted","The ability to rightsize resources as demand shifts","The maximum amount of RAM an Amazon EC2 instance can use","The pay-as-you-go billing model","How easily resources can be procured when they are needed"],explain:"Elasticity refers to the ability to scale resources up or down (rightsize) as demand changes, and to quickly and easily acquire resources when needed.",others:{"A":"EC2 restart speed is an operational characteristic, not elasticity.","C":"Maximum RAM is a hardware specification, not related to elasticity.","D":"Pay-as-you-go is a billing model concept, not elasticity itself."},multi:true},zh:{q:"AWS 雲端中的彈性是指以下哪些內容？（選擇兩個）",opts:["Amazon EC2 執行個體重新啟動的速度","隨著需求變化適當調整資源大小的能力","Amazon EC2 執行個體可使用的最大 RAM 量","按使用量付費的計費模式","需要時輕鬆獲取資源的便利性"],explain:"彈性是指隨著需求變化擴展或縮減資源（適當調整大小）的能力，以及在需要時快速輕鬆地獲取資源的能力。",others:{"A":"EC2 重新啟動速度是操作特性，不是彈性。","C":"最大 RAM 是硬體規格，與彈性無關。","D":"按使用量付費是計費模式概念，不是彈性本身。"},multi:true},correct:[1,4]},
+{id:39,en:{q:"Which service enables customers to audit API calls in their AWS accounts?",opts:["AWS CloudTrail","AWS Trusted Advisor","Amazon Inspector","AWS X-Ray"],explain:"AWS CloudTrail records API calls made in your AWS account, providing an event history of account activity including actions taken through the Console, SDKs, CLI, and other services.",others:{"B":"Trusted Advisor provides best practice recommendations, not API call auditing.","C":"Inspector scans for vulnerabilities, not API call history.","D":"X-Ray is an application performance debugging/tracing tool, not an audit trail service."}},zh:{q:"哪個服務使客戶能夠審計其 AWS 帳戶中的 API 呼叫？",opts:["AWS CloudTrail","AWS Trusted Advisor","Amazon Inspector","AWS X-Ray"],explain:"AWS CloudTrail 記錄在 AWS 帳戶中進行的 API 呼叫，提供帳戶活動的事件歷史記錄，包括透過主控台、SDK、CLI 和其他服務執行的操作。",others:{"B":"Trusted Advisor 提供最佳實踐建議，不是 API 呼叫審計。","C":"Inspector 掃描漏洞，不是 API 呼叫歷史記錄。","D":"X-Ray 是應用程式效能除錯/追蹤工具，不是審計追蹤服務。"}},correct:[0]},
+{id:40,en:{q:"What is a customer responsibility when using AWS Lambda according to the AWS shared responsibility model?",opts:["Managing the code within the Lambda function","Confirming that the hardware is working in the data center","Patching the operating system","Shutting down Lambda functions when they are no longer in use"],explain:"With Lambda, AWS manages the underlying infrastructure, OS, and runtime. The customer's responsibility is writing, deploying, and managing the function code.",others:{"B":"Hardware management is entirely AWS's responsibility.","C":"AWS manages and patches the underlying OS for Lambda.","D":"Lambda functions that aren't invoked don't incur costs; there's no need to shut them down."}},zh:{q:"根據 AWS 共享責任模型，使用 AWS Lambda 時客戶的責任是什麼？",opts:["管理 Lambda 函數中的程式碼","確認資料中心中的硬體正常運作","修補作業系統","當 Lambda 函數不再使用時將其關閉"],explain:"使用 Lambda 時，AWS 管理底層基礎設施、作業系統和執行時環境。客戶的責任是編寫、部署和管理函數程式碼。",others:{"B":"硬體管理完全是 AWS 的責任。","C":"AWS 為 Lambda 管理和修補底層作業系統。","D":"未被呼叫的 Lambda 函數不產生費用；無需「關閉」它們。"}},correct:[0]},
+{id:41,en:{q:"A company has 5 TB of data stored in Amazon S3. They plan to occasionally run queries for analysis. Which AWS service should they use MOST cost-effectively?",opts:["Amazon Redshift","Amazon Athena","Amazon Kinesis","Amazon RDS"],explain:"Amazon Athena is a serverless query service that lets you analyze data in S3 using SQL. You pay only per query run, making it ideal for infrequent analytical queries.",others:{"A":"Redshift is a data warehouse requiring provisioned clusters, which is costly for infrequent queries.","C":"Kinesis is for real-time streaming data, not occasional batch analysis of stored data.","D":"RDS is a managed relational database service, not suited for ad-hoc S3 queries."}},zh:{q:"一家公司在 Amazon S3 中儲存了 5 TB 的資料。該公司計畫偶爾對資料進行查詢以進行分析。應該使用哪個 AWS 服務最具成本效益？",opts:["Amazon Redshift","Amazon Athena","Amazon Kinesis","Amazon RDS"],explain:"Amazon Athena 是一種無伺服器查詢服務，讓您使用 SQL 分析 S3 中的資料。您只需按查詢付費，非常適合不頻繁的分析查詢。",others:{"A":"Redshift 是需要佈建叢集的資料倉儲，對於不頻繁的查詢費用較高。","C":"Kinesis 用於即時串流資料，不適合偶爾批次分析儲存的資料。","D":"RDS 是受管關聯式資料庫服務，不適合臨時 S3 查詢。"}},correct:[1]},
+{id:42,en:{q:"Which AWS service can be used at no additional cost?",opts:["Amazon SageMaker","AWS Config","AWS Organizations","Amazon CloudWatch"],explain:"AWS Organizations is available at no additional charge. You pay only for the AWS resources used in member accounts, not for Organizations itself.",others:{"A":"SageMaker charges for model training, hosting, and notebook instances.","B":"AWS Config charges per configuration item recorded and for rules evaluations.","D":"CloudWatch charges for custom metrics, dashboards, and Log storage beyond the free tier."}},zh:{q:"哪個 AWS 服務可以免費使用？",opts:["Amazon SageMaker","AWS Config","AWS Organizations","Amazon CloudWatch"],explain:"AWS Organizations 可免費使用。您只需為成員帳戶中使用的 AWS 資源付費，不需要為 Organizations 本身付費。",others:{"A":"SageMaker 對模型訓練、託管和筆記本執行個體收費。","B":"AWS Config 對記錄的每個配置項目和規則評估收費。","D":"CloudWatch 對超出免費方案的自訂指標、儀表板和日誌儲存收費。"}},correct:[2]},
+{id:43,en:{q:"Which AWS Cloud Adoption Framework (AWS CAF) capability belongs to the people perspective?",opts:["Data architecture","Event management","Cloud fluency","Strategic partnership"],explain:"Cloud fluency is a people perspective capability in AWS CAF — it refers to building the workforce's ability to understand and use cloud technologies effectively.",others:{"A":"Data architecture belongs to the Platform perspective.","B":"Event management belongs to the Operations perspective.","D":"Strategic partnership belongs to the Business perspective."}},zh:{q:"哪個 AWS 雲端採用框架 (AWS CAF) 能力屬於人員觀點？",opts:["資料架構","事件管理","雲端流暢度","策略合作夥伴關係"],explain:"雲端流暢度是 AWS CAF 人員觀點的能力——它是指建立員工理解和有效使用雲端技術的能力。",others:{"A":"資料架構屬於平台觀點。","B":"事件管理屬於營運觀點。","D":"策略合作夥伴關係屬於業務觀點。"}},correct:[2]},
+{id:44,en:{q:"A company wants to make an upfront commitment for continued use of its production EC2 instances in exchange for reduced cost. Which pricing options meet this with the LOWEST cost? (Choose TWO)",opts:["Spot Instances","On-Demand Instances","Reserved Instances","Savings Plans","Dedicated Hosts"],explain:"Reserved Instances and Savings Plans both require upfront usage commitments and provide significant discounts compared to On-Demand pricing.",others:{"A":"Spot Instances don't require commitments and can be interrupted — not for production.","B":"On-Demand requires no commitment and is the most expensive option.","E":"Dedicated Hosts are for licensing requirements and are generally more expensive."},multi:true},zh:{q:"一家公司想要對其生產 EC2 執行個體的持續使用做出預先承諾，以換取降低的整體成本。哪些定價選項以最低成本滿足這些需求？（選擇兩個）",opts:["競價執行個體","隨需執行個體","預留執行個體","Savings Plans","專用主機"],explain:"預留執行個體和 Savings Plans 都需要預先使用承諾，並提供與隨需定價相比顯著的折扣。",others:{"A":"競價執行個體不需要承諾且可以被中斷——不適合生產環境。","B":"隨需不需要承諾，是最昂貴的選項。","E":"專用主機用於授權要求，通常費用更高。"},multi:true},correct:[2,3]},
+{id:45,en:{q:"A company wants to migrate its on-premises relational databases to AWS close to its current geographical location. Which AWS resource should they use to select the RDS deployment area?",opts:["Amazon Connect","AWS Wavelength","AWS Regions","AWS Direct Connect"],explain:"AWS Regions are geographic areas containing multiple Availability Zones. You select the region closest to your on-premises location to minimize latency.",others:{"A":"Amazon Connect is a cloud contact center service, not a geographical selection tool.","B":"AWS Wavelength extends AWS to 5G networks at the edge, not for data center proximity.","D":"Direct Connect provides dedicated network connections but doesn't determine where to deploy RDS."}},zh:{q:"一家公司想要將其本地關聯式資料庫遷移到 AWS 雲端，盡可能接近當前地理位置。應使用哪個 AWS 資源來選擇 Amazon RDS 部署區域？",opts:["Amazon Connect","AWS Wavelength","AWS 區域","AWS Direct Connect"],explain:"AWS 區域是包含多個可用區的地理區域。您選擇最接近本地位置的區域以最小化延遲。",others:{"A":"Amazon Connect 是雲端客服中心服務，不是地理選擇工具。","B":"AWS Wavelength 將 AWS 擴展到邊緣的 5G 網路，不是用於資料中心鄰近性。","D":"Direct Connect 提供專用網路連接，但不決定在哪裡部署 RDS。"}},correct:[2]},
+{id:46,en:{q:"A company needs to create a cost estimate for a project before the infrastructure is provisioned. Which AWS service or feature can be used to estimate costs before deployment?",opts:["AWS Free Tier","AWS Pricing Calculator","AWS Billing and Cost Management","AWS Cost and Usage Report"],explain:"AWS Pricing Calculator lets you explore AWS services and create an estimate for the cost of your use cases before you deploy any infrastructure.",others:{"A":"Free Tier provides free usage allowances but doesn't estimate costs for projects.","C":"Billing and Cost Management tracks actual spending, not pre-deployment estimates.","D":"Cost and Usage Reports export detailed billing data for analysis, not pre-deployment estimation."}},zh:{q:"一家公司需要在佈建基礎設施之前為專案建立成本估算。在部署之前可以使用哪個 AWS 服務或功能來估算成本？",opts:["AWS 免費方案","AWS Pricing Calculator","AWS Billing and Cost Management","AWS 成本和使用情況報告"],explain:"AWS Pricing Calculator 讓您在部署任何基礎設施之前探索 AWS 服務並為您的使用案例建立成本估算。",others:{"A":"免費方案提供免費使用額度，但不為專案估算成本。","C":"Billing and Cost Management 追蹤實際支出，不是部署前估算。","D":"成本和使用情況報告匯出詳細的計費資料以供分析，不是部署前估算。"}},correct:[1]},
+{id:47,en:{q:"A company is building an application that needs to deliver images and videos globally with minimal latency. Which approach can the company use cost effectively?",opts:["Deliver the content through Amazon CloudFront","Store the content on Amazon S3 and enable S3 cross-region replication","Implement a VPN across multiple AWS Regions","Deliver the content through AWS PrivateLink"],explain:"Amazon CloudFront is a CDN that caches content at edge locations worldwide, delivering images and videos with low latency to users globally.",others:{"B":"Cross-region replication copies data to multiple S3 buckets but doesn't provide edge caching for low-latency delivery.","C":"A VPN provides secure connectivity, not content delivery optimization.","D":"PrivateLink provides private connectivity to AWS services, not global content delivery."}},zh:{q:"一家公司正在構建需要以最低延遲在全球交付圖片和視頻的應用程式。該公司可以使用哪種方法以低成本實現這一目標？",opts:["透過 Amazon CloudFront 交付內容","將內容儲存在 Amazon S3 上並啟用 S3 跨區域複製","在多個 AWS 區域中實施 VPN","透過 AWS PrivateLink 交付內容"],explain:"Amazon CloudFront 是一種 CDN，在全球邊緣位置快取內容，以低延遲向全球使用者交付圖片和視頻。",others:{"B":"跨區域複製將資料複製到多個 S3 儲存桶，但不提供用於低延遲交付的邊緣快取。","C":"VPN 提供安全連接，不是內容交付優化。","D":"PrivateLink 提供到 AWS 服務的私有連接，不是全球內容交付。"}},correct:[0]},
+{id:48,en:{q:"Which option is a benefit of the economies of scale based on the advantages of cloud computing?",opts:["The ability to trade variable expense for fixed expense","Increased speed and agility","Lower variable costs over fixed costs","Increased operational costs across data centers"],explain:"AWS's massive scale allows it to achieve higher economies of scale, resulting in lower variable costs that are passed on to customers.",others:{"A":"Cloud computing trades fixed (capital) expense for variable expense, not the other way around.","B":"Speed and agility is a separate cloud benefit, not economies of scale.","D":"Cloud computing reduces operational costs, not increases them."}},zh:{q:"哪個選項是基於雲端運算優勢的規模經濟效益？",opts:["將可變費用換為固定費用的能力","提高速度和敏捷性","相對於固定成本的較低可變成本","跨資料中心的增加的營運成本"],explain:"AWS 的大規模讓其實現更高的規模經濟，從而降低可變成本並傳遞給客戶——比您自行實現的價格更低。",others:{"A":"雲端運算將固定（資本）費用換為可變費用，而非相反。","B":"速度和敏捷性是一個獨立的雲端效益，不是規模經濟。","D":"雲端運算降低營運成本，而非增加。"}},correct:[2]},
+{id:49,en:{q:"Which software development framework lets a company define cloud resources as code and provision them through AWS CloudFormation?",opts:["AWS CLI","AWS Developer Center","AWS Cloud Development Kit (AWS CDK)","AWS CodeStar"],explain:"AWS CDK is a software development framework that lets you define cloud infrastructure using familiar programming languages, which then synthesizes to CloudFormation templates.",others:{"A":"AWS CLI is a command-line interface for interacting with AWS services, not an IaC framework.","B":"AWS Developer Center is a documentation/resource hub, not a development framework.","D":"CodeStar is a CI/CD tool for managing software development projects, not an IaC framework."}},zh:{q:"哪個軟體開發框架讓公司可以將雲端資源定義為程式碼並透過 AWS CloudFormation 佈建？",opts:["AWS CLI","AWS Developer Center","AWS Cloud Development Kit (AWS CDK)","AWS CodeStar"],explain:"AWS CDK 是一種軟體開發框架，讓您使用熟悉的程式設計語言定義雲端基礎設施，然後合成為 CloudFormation 模板。",others:{"A":"AWS CLI 是與 AWS 服務互動的命令列介面，不是 IaC 框架。","B":"AWS Developer Center 是文件/資源中心，不是開發框架。","D":"CodeStar 是管理軟體開發專案的 CI/CD 工具，不是 IaC 框架。"}},correct:[2]},
+{id:50,en:{q:"A company is developing an application that uses multiple AWS services and needs temporary, limited-privilege credentials for authentication. Which AWS service or feature should they use?",opts:["Amazon API Gateway","IAM users","AWS Security Token Service (AWS STS)","IAM instance profiles"],explain:"AWS STS issues temporary security credentials that can be used to access AWS resources. These credentials expire automatically and are ideal for applications needing limited-privilege access.",others:{"A":"API Gateway manages API endpoints, not authentication credentials.","B":"IAM users have permanent credentials, which is less secure than temporary credentials.","D":"IAM instance profiles allow EC2 instances to assume a role, but STS generates the actual temporary credentials."}},zh:{q:"一家公司正在開發一個使用多個 AWS 服務的應用程式，需要使用臨時、有限權限的憑證進行身份驗證。應使用哪個 AWS 服務或功能？",opts:["Amazon API Gateway","IAM 使用者","AWS Security Token Service (AWS STS)","IAM 執行個體設定檔"],explain:"AWS STS 簽發可用於訪問 AWS 資源的臨時安全憑證。這些憑證會自動過期，非常適合需要有限權限訪問的應用程式。",others:{"A":"API Gateway 管理 API 端點，不是身份驗證憑證。","B":"IAM 使用者擁有永久憑證，比臨時憑證安全性低。","D":"IAM 執行個體設定檔允許 EC2 執行個體承擔角色，但 STS 是生成實際臨時憑證的服務。"}},correct:[2]},
+];
+
+const SETS=[{id:1,start:1,end:50,range:"Q1–Q50"}];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let lang="zh",view="menu",activeSet=null,currentIdx=0;
+let answers={},revealed={},multiSel={};
+let results={};   // setId -> {score,errors:[{qid,userAns,correct}],total,date}
+let reviewSet=null;
+let modalAction=null;
+
+const t=()=>T[lang];
+const getQs=sid=>{const s=SETS.find(x=>x.id===sid);return ALL_QUESTIONS.filter(q=>q.id>=s.start&&q.id<=s.end);};
+const keyOf=i=>String.fromCharCode(65+i);
+const fmtDate=iso=>{if(!iso)return"";const d=new Date(iso);return d.toLocaleDateString()+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});};
+const getUserAns=(qid,isMulti)=>isMulti?(multiSel[qid]||[]):(answers[qid]!==undefined?[answers[qid]]:[]);
+const answeredCount=()=>{const qs=getQs(activeSet);return qs.filter(q=>!!q.en.multi?(multiSel[q.id]||[]).length>0:answers[q.id]!==undefined).length;};
+
+// ── RENDER HELPERS ────────────────────────────────────────────────────────────
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function setHTML(id,html){document.getElementById(id).innerHTML=html;}
+function showView(v){
+  ['view-menu','view-exam','view-result','view-review'].forEach(id=>hide(id));
+  show('view-'+v);
+}
+
+// ── HEADER ────────────────────────────────────────────────────────────────────
+function renderHeader(){
+  const hl=document.getElementById('header-left');
+  document.getElementById('btn-lang').textContent=t().lang;
+  if(view==='menu'){hl.innerHTML=`<span class="header-title">${t().title}</span>`;}
+  else{hl.innerHTML=`<button class="btn-back" onclick="goMenu()">${t().backToMenu}</button>`;}
+}
+
+// ── MENU ──────────────────────────────────────────────────────────────────────
+function renderMenu(){
+  view='menu';renderHeader();showView('menu');
+  let html=`<div class="container-sm"><div style="text-align:center;margin-bottom:2rem">
+    <h1 style="font-size:22px;font-weight:500;margin-bottom:4px">${t().title}</h1>
+    <p class="txt-sec">${t().subtitle}</p></div>
+    <h2 style="font-size:15px;font-weight:500;margin-bottom:12px">${t().selectExam}</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">`;
+  SETS.forEach(s=>{
+    const r=results[s.id],pct2=r?Math.round(r.score/r.total*100):null;
+    const doneTag=r?`<span class="tag tag-green">${t().completed}</span>`:`<span class="tag tag-gray">${t().notStarted}</span>`;
+    const scoreInfo=r?`<span style="margin-left:8px;color:${pct2>=72?'#0F6E56':'#A32D2D'};font-weight:500">${t().score}: ${r.score}/${r.total} (${pct2}%)</span>`:'';
+    const dateInfo=r?.date?`<div class="txt-sec" style="margin-top:3px;font-size:12px">📅 ${t().takenOn}: ${fmtDate(r.date)}</div>`:'';
+    const reviewBtn=r&&r.errors.length>0?`<button class="btn-ghost" onclick="openReview(${s.id})">👁 ${t().review} (${r.errors.length})</button>`:'';
+    const startBtn=`<button class="${r?'btn-ghost btn-outline-primary':'btn-primary'}" onclick="startExam(${s.id})">${r?'🔄 '+t().retake:'▶ '+t().start}</button>`;
+    const delBtn=r?`<button class="btn-ghost btn-danger" onclick="confirmDelete(${s.id})">🗑 ${t().deleteRecord}</button>`:'';
+    html+=`<div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:500;font-size:15px;margin-bottom:3px">${t().examSet} ${s.id} <span class="txt-sec" style="font-weight:400;font-size:12px">(${s.range})</span>${doneTag}</div>
+          <div class="txt-sec">50 ${t().questions} · ${t().perQuestion}${scoreInfo}</div>
+          ${dateInfo}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${reviewBtn}${startBtn}${delBtn}</div>
+      </div></div>`;
+  });
+  html+='</div></div>';
+  setHTML('view-menu',html);
+}
+
+// ── EXAM ──────────────────────────────────────────────────────────────────────
+function startExam(sid){
+  activeSet=sid;currentIdx=0;answers={};revealed={};multiSel={};
+  view='exam';renderHeader();showView('exam');renderExam();
+}
+
+function renderExam(){
+  const qs=getQs(activeSet),total=qs.length,q=qs[currentIdx];
+  if(!q)return;
+  const isMulti=!!q.en.multi,qid=q.id,isRev=!!revealed[qid];
+  const pct=Math.round(((currentIdx)/total)*100+(1/total)*100);
+  const answered=answeredCount();
+
+  let optsHtml='';
+  q[lang].opts.forEach((opt,i)=>{
+    const uAns=getUserAns(qid,isMulti),uChose=uAns.includes(i),isCorr=q.correct.includes(i);
+    const isSel=isMulti?(multiSel[qid]||[]).includes(i):false;
+    let cls='opt-btn',icon='';
+    if(isRev){
+      cls+=' revealed';
+      if(isCorr&&uChose){cls+=' correct';icon='<span class="opt-icon" style="color:#0F6E56">✓</span>';}
+      else if(isCorr){cls+=' missed';icon='<span class="opt-icon" style="color:#1D9E75;opacity:.6">✓</span>';}
+      else if(uChose){cls+=' wrong';icon='<span class="opt-icon" style="color:#A32D2D">✗</span>';}
+    }else if(isSel){cls+=' selected-multi';}
+    optsHtml+=`<button class="${cls}" onclick="optClick(${i})">
+      <span class="opt-key">${keyOf(i)}</span><span style="flex:1">${opt}</span>${icon}</button>`;
+  });
+
+  let multiBar='',explainHtml='';
+  if(isMulti&&!isRev){
+    const cnt=(multiSel[qid]||[]).length;
+    const dis=cnt<2?'style="opacity:.5;cursor:default"':'';
+    multiBar=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span class="txt-sec">${cnt} / 2 ${t().selected}</span>
+      <button class="btn-primary" onclick="checkMulti()" ${dis}>${t().check}</button></div>`;
+  }
+  if(isRev){
+    const corrKeys=q.correct.map(i=>keyOf(i)).join(', ');
+    let othersHtml='';
+    if(q[lang].others&&Object.keys(q[lang].others).length>0){
+      othersHtml=`<div class="explain-others-title" style="margin-top:8px">${t().whyWrong}:</div>`;
+      Object.entries(q[lang].others).forEach(([k,v])=>{othersHtml+=`<div class="explain-other"><strong>${k}:</strong> ${v}</div>`;});
+    }
+    explainHtml=`<div class="explain-box">
+      <div class="explain-correct">✓ ${t().correctAnswer}: ${corrKeys}</div>
+      <div class="txt-sec" style="margin-bottom:8px"><strong style="color:#1a1a1a">${t().whyCorrect}: </strong>${q[lang].explain}</div>
+      ${othersHtml}</div>`;
+  }
+
+  const isLast=currentIdx===total-1;
+  const submitBtn=isLast
+    ?`<button class="btn-primary" onclick="doSubmit()">✓ ${t().submit}</button>`
+    :`<button class="btn-primary" onclick="navExam(1)">${t().next} →</button>`;
+
+  setHTML('view-exam',`<div class="container">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+      <span class="txt-sec">${t().examSet} ${activeSet} · ${t().examProgress}: ${answered}/${total}</span>
+      <span class="txt-sec">${currentIdx+1} / ${total}</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="txt-sec" style="font-size:12px;margin-bottom:5px">Q${q.id}</div>
+      <div style="font-size:15px;font-weight:500;line-height:1.6">${q[lang].q}</div>
+      ${isMulti?`<div class="multi-hint">${t().chooseTwo}</div>`:''}
+    </div>
+    ${optsHtml}${multiBar}${explainHtml}
+    <div class="nav-row">
+      <button class="btn-ghost" onclick="navExam(-1)" ${currentIdx===0?'style="opacity:.4;cursor:default"':''}>← ${t().prev}</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost" onclick="confirmEarlySubmit()">⚑ ${t().earlySubmit}</button>
+        ${submitBtn}
+      </div>
+    </div>
+  </div>`);
+}
+
+function navExam(dir){
+  const total=getQs(activeSet).length;
+  const next=currentIdx+dir;
+  if(next<0||next>=total)return;
+  currentIdx=next;renderExam();
+}
+
+function optClick(idx){
+  if(!activeSet)return;
+  const qs=getQs(activeSet),q=qs[currentIdx],qid=q.id;
+  const isMulti=!!q.en.multi;
+  if(revealed[qid])return;
+  if(isMulti){
+    const sel=[...(multiSel[qid]||[])],pos=sel.indexOf(idx);
+    if(pos>=0)sel.splice(pos,1);else if(sel.length<2)sel.push(idx);
+    multiSel[qid]=sel;
+  }else{
+    answers[qid]=idx;
+    revealed[qid]=true;
+  }
+  renderExam();
+}
+
+function checkMulti(){
+  if(!activeSet)return;
+  const qs=getQs(activeSet),q=qs[currentIdx],qid=q.id;
+  const sel=multiSel[qid]||[];
+  if(sel.length<2)return;
+  answers[qid]=sel;
+  revealed[qid]=true;
+  renderExam();
+}
+
+function doSubmit(){
+  const qs=getQs(activeSet);let score=0;const errors=[];
+  qs.forEach(q=>{
+    const isMulti=!!q.en.multi,qid=q.id;
+    const uAns=getUserAns(qid,isMulti);
+    const correct=[...q.correct].sort(),uSorted=[...uAns].sort();
+    if(JSON.stringify(correct)===JSON.stringify(uSorted))score+=2;
+    else errors.push({qid,userAns:uSorted,correct});
+  });
+  results[activeSet]={score,errors,total:qs.length*2,date:new Date().toISOString()};
+  closeModal();renderResult();
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function confirmEarlySubmit(){
+  const n=answeredCount(),total=getQs(activeSet).length;
+  showModal(t().earlySubmitConfirm,t().earlySubmitDesc.replace('{n}',n).replace('{total}',total),t().confirm,false,()=>doSubmit());
+}
+function confirmDelete(sid){
+  showModal(t().deleteConfirm,t().deleteDesc,t().deleteRecord,true,()=>{delete results[sid];closeModal();renderMenu();});
+}
+function showModal(title,desc,confirmLbl,danger,action){
+  modalAction=action;
+  setHTML('modal-title',title);
+  setHTML('modal-desc',desc);
+  setHTML('modal-cancel',t().cancel);
+  const cb=document.getElementById('modal-confirm');
+  cb.textContent=confirmLbl;
+  cb.className=danger?'btn-primary':'btn-primary';
+  cb.style.background=danger?'#A32D2D':'#378ADD';
+  cb.style.borderColor=danger?'#A32D2D':'#378ADD';
+  cb.onclick=()=>modalAction&&modalAction();
+  show('modal-overlay');
+}
+function closeModal(){hide('modal-overlay');modalAction=null;}
+
+// ── RESULT ────────────────────────────────────────────────────────────────────
+function renderResult(){
+  const r=results[activeSet];
+  if(!r)return;
+  view='result';renderHeader();showView('result');
+  const pct=Math.round(r.score/r.total*100);
+  const pass=pct>=72;
+  const reviewBtn=r.errors.length>0?`<button class="btn-ghost" onclick="openReview(${activeSet})">👁 ${t().review} (${r.errors.length})</button>`:'';
+  setHTML('view-result',`<div class="container-sm">
+    <div class="card" style="text-align:center;padding:2.5rem 2rem">
+      <div class="result-score" style="color:${pass?'#1D9E75':'#A32D2D'}">${pct}%</div>
+      <div class="result-label">${pass?t().passed:t().failed}</div>
+      <div class="result-sub">${t().passMark}</div>
+      <div class="result-date">📅 ${t().takenOn}: ${fmtDate(r.date)}</div>
+      <div class="result-stats">
+        <div><div class="stat-val" style="color:#1D9E75">${r.score}</div><div class="stat-lbl">${t().score}</div></div>
+        <div><div class="stat-val" style="color:#A32D2D">${r.errors.length*2}</div><div class="stat-lbl">${t().wrongPts}</div></div>
+        <div><div class="stat-val">${r.total}</div><div class="stat-lbl">${t().totalPts}</div></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        ${reviewBtn}
+        <button class="btn-primary" onclick="startExam(${activeSet})">🔄 ${t().retake}</button>
+        <button class="btn-ghost btn-danger" onclick="confirmDelete(${activeSet})">🗑 ${t().deleteRecord}</button>
+      </div>
+    </div>
+  </div>`);
+}
+
+// ── REVIEW ────────────────────────────────────────────────────────────────────
+function openReview(sid){
+  reviewSet=sid;view='review';renderHeader();showView('review');
+  const r=results[sid];
+  const qs=getQs(sid).filter(q=>(r?.errors||[]).some(e=>e.qid===q.id));
+  let html=`<div class="container">
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">${t().errorReview}</h2>
+    <p class="txt-sec" style="margin-bottom:24px">${t().examSet} ${sid} · ${qs.length} ${t().wrong}${r?.date?' · '+t().takenOn+': '+fmtDate(r.date):''}</p>`;
+  if(qs.length===0){html+=`<div style="text-align:center;padding:3rem" class="txt-sec">${t().noErrors}</div>`;}
+  qs.forEach(q=>{
+    const isMulti=!!q.en.multi,qid=q.id;
+    const errRec=(r?.errors||[]).find(e=>e.qid===qid);
+    const userAns=errRec?.userAns||[];
+    let yourHtml=userAns.length===0
+      ?`<div class="sec-bg txt-sec" style="font-style:italic;padding:6px 10px;border-radius:8px;font-size:13px">${t().unanswered}</div>`
+      :userAns.map(i=>`<div class="review-ans review-wrong-line"><span style="font-weight:500;color:#A32D2D;min-width:18px">${keyOf(i)}</span><span>${q[lang].opts[i]}</span><span style="margin-left:auto;font-weight:700;color:#A32D2D">✗</span></div>`).join('');
+    let corrHtml=q.correct.map(i=>`<div class="review-ans review-correct-line"><span style="font-weight:500;color:#0F6E56;min-width:18px">${keyOf(i)}</span><span>${q[lang].opts[i]}</span><span style="margin-left:auto;font-weight:700;color:#0F6E56">✓</span></div>`).join('');
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="txt-sec" style="font-size:12px;margin-bottom:6px">Q${q.id}${isMulti?' · '+t().chooseTwo:''}</div>
+      <div style="font-size:15px;font-weight:500;line-height:1.6;margin-bottom:14px">${q[lang].q}</div>
+      <div class="review-your">${t().yourAnswerLabel}:</div>
+      <div style="margin-bottom:12px">${yourHtml}</div>
+      <div class="review-your">${t().correctAnswerLabel}:</div>
+      <div style="margin-bottom:14px">${corrHtml}</div>
+      <div class="review-hint"><strong>${t().whyCorrect}: </strong>${q[lang].explain}</div>
+    </div>`;
+  });
+  html+='</div>';
+  setHTML('view-review',html);
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function goMenu(){renderMenu();}
+function toggleLang(){lang=lang==='zh'?'en':'zh';
+  if(view==='menu')renderMenu();
+  else if(view==='exam')renderExam();
+  else if(view==='result')renderResult();
+  else if(view==='review')openReview(reviewSet);
+  renderHeader();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderMenu();
+</script>
+</body>
+</html>
