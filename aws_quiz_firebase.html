@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AWS CLF-C02 練習題</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f0eb;min-height:100vh;color:#1a1a1a}
+@media(prefers-color-scheme:dark){body{background:#1c1c1a;color:#e8e8e4}.card,.header,.modal-box{background:#2a2a28!important;border-color:rgba(255,255,255,.1)!important}.opt-btn{background:#2a2a28!important;border-color:rgba(255,255,255,.12)!important;color:#e8e8e4!important}.opt-btn:hover:not(.rv){background:#333!important}.sec-bg{background:#232321!important}.t2{color:#9a9a96!important}.tag-gray{background:#333!important;color:#9a9a96!important}.inp{background:#333!important;color:#e8e8e4!important;border-color:rgba(255,255,255,.2)!important}.btn-ghost{color:#e8e8e4!important;border-color:rgba(255,255,255,.2)!important}}
+.header{background:#fff;border-bottom:1px solid rgba(0,0,0,.1);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:10}
+.card{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:12px}
+.opt-btn{width:100%;display:flex;align-items:flex-start;gap:10px;padding:.75rem 1rem;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;background:#fff;font-size:14px;color:#1a1a1a;line-height:1.5;text-align:left;font-family:inherit;margin-bottom:8px}
+.opt-btn:hover:not(.rv){background:#f5f5f0;border-color:rgba(0,0,0,.22)}
+.opt-btn.ok{border-color:#1D9E75!important;background:#E1F5EE!important}
+.opt-btn.no{border-color:#A32D2D!important;background:#FCEBEB!important}
+.opt-btn.miss{border-color:#1D9E75!important;border-style:dashed!important;background:transparent!important}
+.opt-btn.sel{border-color:#378ADD!important;background:#E6F1FB!important}
+.t2{color:#666;font-size:13px}.sec-bg{background:#f5f5f0;border-radius:8px;padding:.75rem 1rem}
+.btn1{padding:7px 18px;border:1px solid #378ADD;border-radius:8px;background:#378ADD;color:#fff;font-size:14px;cursor:pointer;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-ghost{padding:6px 14px;border:1px solid rgba(0,0,0,.2);border-radius:8px;background:transparent;font-size:13px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-danger{border-color:#A32D2D!important;color:#A32D2D!important}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;margin-left:6px}
+.tag-green{background:#E1F5EE;color:#0F6E56}.tag-gray{background:#eee;color:#666}
+.progress-bar{height:4px;background:rgba(0,0,0,.08);border-radius:4px;overflow:hidden;margin-bottom:20px}
+.progress-fill{height:100%;background:#378ADD;border-radius:4px;transition:width .3s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-box{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.75rem 1.5rem;max-width:360px;width:90%}
+.inp{width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,.2);border-radius:8px;font-size:15px;font-family:inherit;outline:none}.inp:focus{border-color:#378ADD}
+.err{color:#A32D2D;font-size:13px;margin-top:6px;min-height:20px}
+.lnk{color:#378ADD;cursor:pointer;text-decoration:underline;font-size:14px}
+.hidden{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding:1.5rem 1rem}
+.wrap-sm{max-width:480px;margin:0 auto;padding:2rem 1rem}
+.ex-box{background:#f5f5f0;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:1rem 1.25rem;margin-top:12px;font-size:13px;line-height:1.7}
+.rv-ans{display:flex;align-items:center;gap:8px;padding:.5rem .9rem;border-radius:8px;font-size:13px;margin-bottom:5px}
+.rv-ok{border:1px solid #1D9E75;background:#E1F5EE}.rv-no{border:1px solid #A32D2D;background:#FCEBEB}
+.rv-hint{background:#f5f5f0;border-radius:8px;padding:.75rem 1rem;font-size:13px;line-height:1.7;border-left:3px solid #378ADD;margin-top:4px}
+.nav-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px}
+@media(max-width:600px){.wrap,.wrap-sm{padding:1rem .75rem}.card{padding:1rem}.header{padding:0 .75rem}}
+</style>
+</head>
+<body>
+<div class="header" id="hdr"><div id="hl"></div><div id="hr" style="display:flex;gap:8px;align-items:center"></div></div>
+<div id="V-login"></div><div id="V-menu" class="hidden"></div><div id="V-exam" class="hidden"></div>
+<div id="V-result" class="hidden"></div><div id="V-review" class="hidden"></div>
+<div class="modal-overlay hidden" id="modal"><div class="modal-box"><div id="m-t" style="font-weight:500;font-size:16px;margin-bottom:8px"></div><div id="m-d" class="t2" style="line-height:1.6;margin-bottom:20px"></div><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-ghost" id="m-c" onclick="closeM()"></button><button id="m-o" class="btn1"></button></div></div></div>
+
+<!-- ▼▼▼ 題庫從外部檔案載入 ▼▼▼ -->
+<script src="questions.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// 🔧 FIREBASE CONFIG — 請替換成你自己的 Firebase 設定
+// ═══════════════════════════════════════════════════════════════════════
+const firebaseConfig={
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  projectId:"YOUR_PROJECT_ID",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"YOUR_SENDER_ID",
+  appId:"YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+// ═══════════════════════════════════════════════════════════════════════
+
+if(typeof Q==='undefined'){document.body.innerHTML='<div style="text-align:center;padding:4rem;color:#A32D2D;font-size:18px">❌ 找不到 questions.js</div>';throw Error('missing');}
+
+const L={
+en:{title:"AWS CLF-C02 Practice",subtitle:"Cloud Practitioner Exam",login:"Login",register:"Create Account",username:"Username",loginBtn:"Login",registerBtn:"Register",noUser:"Account not found",userExists:"Username taken",enterName:"Enter username",back:"← Back",logout:"Logout",set:"Set",start:"Start",review:"Errors",retake:"Retake",prev:"Prev",next:"Next",check:"Confirm",submit:"Submit",early:"Submit Early",earlyQ:"Submit now?",earlyD:"Answered {n}/{t}. Unanswered = wrong.",confirm:"Confirm",cancel:"Cancel",pass:"Passed! 🎉",fail:"Keep Practicing",mark:"Pass: 72%",ans:"Answer",why:"Explanation",whyW:"Why others wrong",two:"Choose TWO",sel:"selected",errRev:"Error Review",noErr:"No errors!",lang:"中文",notDone:"Not started",perQ:"2 pts",prog:"Progress",del:"Delete",delQ:"Delete record?",delD:"Remove score and errors permanently.",date:"Date",noAns:"Unanswered",yourA:"Your answer",corrA:"Correct",score:"Score",wrong:"Wrong",total:"Total",done:"Done",qs:"Qs",hi:"Hi",wPts:"Lost",tPts:"Total"},
+zh:{title:"AWS CLF-C02 練習題",subtitle:"雲端從業人員認證考試",login:"登入",register:"建立帳號",username:"使用者名稱",loginBtn:"登入",registerBtn:"建立帳號",noUser:"查無此帳戶",userExists:"此名稱已被使用",enterName:"請輸入使用者名稱",back:"← 返回",logout:"登出",set:"考卷",start:"開始考試",review:"查看錯題",retake:"重新作答",prev:"上一題",next:"下一題",check:"確認答案",submit:"交卷",early:"提前交卷",earlyQ:"確定要提前交卷嗎？",earlyD:"已作答 {n}/{t} 題，未作答計為答錯。",confirm:"確認交卷",cancel:"取消",pass:"恭喜通過！🎉",fail:"繼續加油",mark:"及格線：72%",ans:"正確答案",why:"解析",whyW:"其他選項錯誤原因",two:"請選擇兩個答案",sel:"已選",errRev:"錯題回顧",noErr:"沒有錯題！",lang:"English",notDone:"尚未作答",perQ:"每題2分",prog:"進度",del:"刪除紀錄",delQ:"確定刪除紀錄？",delD:"將永久移除此考卷的成績與錯題。",date:"作答時間",noAns:"未作答",yourA:"您的作答",corrA:"正確答案",score:"得分",wrong:"答錯",total:"總分",done:"已完成",qs:"題",hi:"你好",wPts:"答錯分",tPts:"總分"}
+};
+
+let lang="zh",view="login",curU=null,aSet=null,ci=0;
+let ans={},rvd={},msel={},uRes={};
+let rvSet=null,mFn=null;
+const t=()=>L[lang];
+const K=i=>String.fromCharCode(65+i);
+const fmt=d=>{if(!d)return"";const x=new Date(d);return x.toLocaleDateString()+' '+x.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});};
+const gQs=sid=>Q.filter(q=>q.id>=SETS.find(s=>s.id===sid).start&&q.id<=SETS.find(s=>s.id===sid).end);
+const qT=q=>lang==='en'?q.q:(q.z||q.q);
+const qX=q=>lang==='en'?q.a:(q.az||q.a);
+const qW=q=>q.w||null;
+const uA=(qid,m)=>m?(msel[qid]||[]):(ans[qid]!==undefined?[ans[qid]]:[]);
+const aCnt=()=>gQs(aSet).filter(q=>q.m?(msel[q.id]||[]).length>0:ans[q.id]!==undefined).length;
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function $(id){return document.getElementById(id);}
+function sV(v){['V-login','V-menu','V-exam','V-result','V-review'].forEach(x=>hide(x));show('V-'+v);view=v;rH();}
+
+function rH(){
+  const hl=$('hl'),hr=$('hr');
+  if(view==='login'){hl.innerHTML=`<span style="font-weight:500;font-size:16px">${t().title}</span>`;hr.innerHTML=`<button class="btn-ghost" style="font-size:12px;padding:4px 12px" onclick="tL()">${t().lang}</button>`;}
+  else{const bb=view!=='menu'?`<button class="btn-ghost" onclick="gM()" style="font-size:13px;padding:4px 10px">${t().back}</button>`:'';
+    hl.innerHTML=`<div style="display:flex;align-items:center;gap:8px">${bb}<span class="t2" style="font-size:13px">${t().hi}, <b>${curU}</b></span></div>`;
+    hr.innerHTML=`<button class="btn-ghost" style="font-size:12px;padding:4px 12px" onclick="tL()">${t().lang}</button><button class="btn-ghost btn-danger" style="font-size:12px;padding:4px 12px" onclick="doOut()">${t().logout}</button>`;}
+}
+function tL(){lang=lang==='zh'?'en':'zh';if(view==='login')rLogin();else if(view==='menu')rMenu();else if(view==='exam')rExam();else if(view==='result')rRes();else if(view==='review')rRev();rH();}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────
+function rLogin(){sV('login');$('V-login').innerHTML=`<div class="wrap-sm" style="padding-top:12vh;text-align:center">
+<h1 style="font-size:24px;font-weight:500;margin-bottom:4px">${t().title}</h1><p class="t2" style="margin-bottom:2rem">${t().subtitle}</p>
+<div class="card" style="text-align:left"><div id="lf"><label class="t2" style="font-size:12px;display:block;margin-bottom:4px">${t().username}</label>
+<input class="inp" id="iu" placeholder="${t().username}" onkeydown="if(event.key==='Enter')doIn()"/><div class="err" id="le"></div>
+<button class="btn1" style="width:100%;justify-content:center;margin-top:8px" onclick="doIn()">${t().loginBtn}</button>
+<div style="text-align:center;margin-top:12px"><span class="lnk" onclick="sReg()">${t().register}</span></div></div>
+<div id="rf" class="hidden"><label class="t2" style="font-size:12px;display:block;margin-bottom:4px">${t().username}</label>
+<input class="inp" id="ir" placeholder="${t().username}" onkeydown="if(event.key==='Enter')doReg()"/><div class="err" id="re"></div>
+<button class="btn1" style="width:100%;justify-content:center;margin-top:8px" onclick="doReg()">${t().registerBtn}</button>
+<div style="text-align:center;margin-top:12px"><span class="lnk" onclick="sLog()">${t().login}</span></div></div></div></div>`;}
+function sReg(){hide('lf');show('rf');$('re').textContent='';}
+function sLog(){show('lf');hide('rf');$('le').textContent='';}
+async function doIn(){const n=$('iu').value.trim();if(!n){$('le').textContent=t().enterName;return;}try{const d=await db.collection('users').doc(n).get();if(!d.exists){$('le').textContent=t().noUser;return;}curU=n;localStorage.setItem('awsqu',n);await ldRes();rMenu();}catch(e){$('le').textContent='Error: '+e.message;}}
+async function doReg(){const n=$('ir').value.trim();if(!n){$('re').textContent=t().enterName;return;}try{const d=await db.collection('users').doc(n).get();if(d.exists){$('re').textContent=t().userExists;return;}await db.collection('users').doc(n).set({createdAt:new Date().toISOString()});curU=n;localStorage.setItem('awsqu',n);uRes={};rMenu();}catch(e){$('re').textContent='Error: '+e.message;}}
+function doOut(){curU=null;localStorage.removeItem('awsqu');uRes={};rLogin();}
+async function ldRes(){uRes={};try{const s=await db.collection('records').where('username','==',curU).get();s.forEach(d=>{const x=d.data();uRes[x.setId]=x;});}catch(e){console.error(e);}}
+async function svRes(sid,data){try{await db.collection('records').doc(curU+'_s'+sid).set({...data,username:curU,setId:sid});}catch(e){console.error(e);}}
+async function delRes(sid){try{await db.collection('records').doc(curU+'_s'+sid).delete();}catch(e){console.error(e);}delete uRes[sid];}
+
+// ── MENU ──────────────────────────────────────────────────────────────
+function gM(){rMenu();}
+function rMenu(){sV('menu');let h=`<div class="wrap-sm"><h2 style="font-size:15px;font-weight:500;margin-bottom:12px">${t().set}</h2>`;
+SETS.forEach(s=>{const r=uRes[s.id],p=r?Math.round(r.score/r.total*100):null;
+const dn=r?`<span class="tag tag-green">${t().done}</span>`:`<span class="tag tag-gray">${t().notDone}</span>`;
+const sc=r?`<span style="color:${p>=72?'#0F6E56':'#A32D2D'};font-weight:500;margin-left:6px">${t().score}: ${r.score}/${r.total} (${p}%)</span>`:'';
+const dt=r?.date?`<div class="t2" style="font-size:12px;margin-top:3px">📅 ${t().date}: ${fmt(r.date)}</div>`:'';
+const rb=r&&r.errors&&r.errors.length>0?`<button class="btn-ghost" onclick="oRev(${s.id})">👁 ${t().review} (${r.errors.length})</button>`:'';
+const sb=`<button class="${r?'btn-ghost':'btn1'}" style="${r?'border-color:#378ADD;color:#378ADD':''}" onclick="sExam(${s.id})">${r?'🔄 '+t().retake:'▶ '+t().start}</button>`;
+const db2=r?`<button class="btn-ghost btn-danger" onclick="cDel(${s.id})">🗑 ${t().del}</button>`:'';
+h+=`<div class="card"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+<div><div style="font-weight:500;font-size:15px;margin-bottom:3px">${t().set} ${s.id} <span class="t2" style="font-weight:400;font-size:12px">(${s.range})</span>${dn}</div>
+<div class="t2">${s.end-s.start+1} ${t().qs} · ${t().perQ}${sc}</div>${dt}</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap">${rb}${sb}${db2}</div></div></div>`;});
+h+='</div>';$('V-menu').innerHTML=h;}
+
+// ── EXAM ──────────────────────────────────────────────────────────────
+function sExam(sid){aSet=sid;ci=0;ans={};rvd={};msel={};sV('exam');rExam();}
+function rExam(){const qs=gQs(aSet),tot=qs.length,q=qs[ci];if(!q)return;
+const mu=!!q.m,qid=q.id,rv=!!rvd[qid],pct=Math.round((ci/tot)*100+(1/tot)*100);
+let oh='';q.o.forEach((opt,i)=>{const ua=uA(qid,mu),uc=ua.includes(i),ic=q.c.includes(i),sl=mu?(msel[qid]||[]).includes(i):false;
+let cl='opt-btn',ik='';if(rv){cl+=' rv';if(ic&&uc){cl+=' ok';ik='<span style="margin-left:auto;color:#0F6E56;font-weight:700">✓</span>';}else if(ic){cl+=' miss';ik='<span style="margin-left:auto;color:#1D9E75;font-weight:700;opacity:.6">✓</span>';}else if(uc){cl+=' no';ik='<span style="margin-left:auto;color:#A32D2D;font-weight:700">✗</span>';}}else if(sl){cl+=' sel';}
+oh+=`<button class="${cl}" onclick="oC(${i})"><span style="font-weight:500;font-size:13px;color:#888;min-width:20px">${K(i)}</span><span style="flex:1">${opt}</span>${ik}</button>`;});
+let mb='',eb='';
+if(mu&&!rv){const n=(msel[qid]||[]).length;mb=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="t2">${n}/2 ${t().sel}</span><button class="btn1" onclick="cMu()" ${n<2?'style="opacity:.5;cursor:default"':''}>${t().check}</button></div>`;}
+if(rv){const ck=q.c.map(i=>K(i)).join(', ');
+let wo='';const w=qW(q);if(w&&Object.keys(w).length>0){wo=`<div class="t2" style="font-weight:500;font-size:12px;margin-top:8px">${t().whyW}:</div>`;Object.entries(w).forEach(([k,v])=>{wo+=`<div class="t2" style="margin-bottom:2px"><b>${k}:</b> ${v}</div>`;});}
+eb=`<div class="ex-box"><div style="color:#0F6E56;font-weight:500;margin-bottom:4px">✓ ${t().ans}: ${ck}</div><div class="t2"><b>${t().why}: </b>${qX(q)}</div>${wo}</div>`;}
+const last=ci===tot-1;
+const nb=last?`<button class="btn1" onclick="doSub()">✓ ${t().submit}</button>`:`<button class="btn1" onclick="nE(1)">${t().next} →</button>`;
+$('V-exam').innerHTML=`<div class="wrap">
+<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span class="t2">${t().set} ${aSet} · ${t().prog}: ${aCnt()}/${tot}</span><span class="t2">${ci+1}/${tot}</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+<div class="card"><div class="t2" style="font-size:12px;margin-bottom:5px">Q${q.id}</div><div style="font-size:15px;font-weight:500;line-height:1.6">${qT(q)}</div>${mu?`<div style="font-size:12px;color:#185FA5;font-style:italic;margin-top:6px">${t().two}</div>`:''}</div>
+${oh}${mb}${eb}
+<div class="nav-row"><button class="btn-ghost" onclick="nE(-1)" ${ci===0?'style="opacity:.4;cursor:default"':''}>← ${t().prev}</button>
+<div style="display:flex;gap:8px"><button class="btn-ghost" onclick="cEarly()">⚑ ${t().early}</button>${nb}</div></div></div>`;}
+function nE(d){const n=ci+d;if(n<0||n>=gQs(aSet).length)return;ci=n;rExam();}
+function oC(i){const q=gQs(aSet)[ci],qid=q.id;if(rvd[qid])return;if(q.m){const s=[...(msel[qid]||[])],p=s.indexOf(i);if(p>=0)s.splice(p,1);else if(s.length<2)s.push(i);msel[qid]=s;}else{ans[qid]=i;rvd[qid]=true;}rExam();}
+function cMu(){const q=gQs(aSet)[ci],qid=q.id,s=msel[qid]||[];if(s.length<2)return;ans[qid]=s;rvd[qid]=true;rExam();}
+async function doSub(){const qs=gQs(aSet);let sc=0;const errs=[];
+qs.forEach(q=>{const mu=!!q.m,qid=q.id,ua=uA(qid,mu);const c=[...q.c].sort(),u=[...ua].sort();
+if(JSON.stringify(c)===JSON.stringify(u))sc+=2;else errs.push({qid,userAns:u,correct:c});});
+const data={score:sc,errors:errs,total:qs.length*2,date:new Date().toISOString()};
+uRes[aSet]=data;await svRes(aSet,data);closeM();rRes();}
+
+// ── MODAL ─────────────────────────────────────────────────────────────
+function sM(title,desc,okLbl,danger,fn){$('m-t').textContent=title;$('m-d').textContent=desc;$('m-c').textContent=t().cancel;const b=$('m-o');b.textContent=okLbl;b.className='btn1';b.style.background=danger?'#A32D2D':'#378ADD';b.style.borderColor=danger?'#A32D2D':'#378ADD';mFn=fn;b.onclick=()=>{if(mFn)mFn();};show('modal');}
+function closeM(){hide('modal');mFn=null;}
+function cEarly(){const n=aCnt(),tot=gQs(aSet).length;sM(t().earlyQ,t().earlyD.replace('{n}',n).replace('{t}',tot),t().confirm,false,()=>doSub());}
+function cDel(sid){sM(t().delQ,t().delD,t().del,true,async()=>{await delRes(sid);closeM();rMenu();});}
+
+// ── RESULT ────────────────────────────────────────────────────────────
+function rRes(){sV('result');const r=uRes[aSet];if(!r)return;const p=Math.round(r.score/r.total*100),ok=p>=72;
+const rb=r.errors&&r.errors.length>0?`<button class="btn-ghost" onclick="oRev(${aSet})">👁 ${t().review} (${r.errors.length})</button>`:'';
+$('V-result').innerHTML=`<div class="wrap-sm"><div class="card" style="text-align:center;padding:2.5rem 2rem">
+<div style="font-size:56px;font-weight:500;color:${ok?'#1D9E75':'#A32D2D'}">${p}%</div>
+<div style="font-size:18px;font-weight:500;margin-bottom:4px">${ok?t().pass:t().fail}</div>
+<div class="t2">${t().mark}</div><div class="t2" style="margin:8px 0 24px;font-size:12px">📅 ${t().date}: ${fmt(r.date)}</div>
+<div style="display:flex;justify-content:center;gap:40px;margin-bottom:28px">
+<div><div style="font-size:24px;font-weight:500;color:#1D9E75">${r.score}</div><div class="t2">${t().score}</div></div>
+<div><div style="font-size:24px;font-weight:500;color:#A32D2D">${r.errors?r.errors.length*2:0}</div><div class="t2">${t().wPts}</div></div>
+<div><div style="font-size:24px;font-weight:500">${r.total}</div><div class="t2">${t().tPts}</div></div></div>
+<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${rb}
+<button class="btn1" onclick="sExam(${aSet})">🔄 ${t().retake}</button>
+<button class="btn-ghost btn-danger" onclick="cDel(${aSet})">🗑 ${t().del}</button></div></div></div>`;}
+
+// ── REVIEW ────────────────────────────────────────────────────────────
+function oRev(sid){rvSet=sid;rRev();}
+function rRev(){sV('review');const r=uRes[rvSet];
+const qs=gQs(rvSet).filter(q=>(r?.errors||[]).some(e=>e.qid===q.id));
+let h=`<div class="wrap"><h2 style="font-size:18px;font-weight:500;margin-bottom:4px">${t().errRev}</h2><p class="t2" style="margin-bottom:24px">${t().set} ${rvSet} · ${qs.length} ${t().wrong}${r?.date?' · '+fmt(r.date):''}</p>`;
+if(!qs.length)h+=`<div class="t2" style="text-align:center;padding:3rem">${t().noErr}</div>`;
+qs.forEach(q=>{const mu=!!q.m,err=(r?.errors||[]).find(e=>e.qid===q.id),ua=err?.userAns||[];
+let yh=ua.length===0?`<div class="sec-bg t2" style="font-style:italic;font-size:13px">${t().noAns}</div>`:ua.map(i=>`<div class="rv-ans rv-no"><span style="font-weight:500;color:#A32D2D;min-width:18px">${K(i)}</span><span>${q.o[i]}</span><span style="margin-left:auto;font-weight:700;color:#A32D2D">✗</span></div>`).join('');
+let ch=q.c.map(i=>`<div class="rv-ans rv-ok"><span style="font-weight:500;color:#0F6E56;min-width:18px">${K(i)}</span><span>${q.o[i]}</span><span style="margin-left:auto;font-weight:700;color:#0F6E56">✓</span></div>`).join('');
+h+=`<div class="card"><div class="t2" style="font-size:12px;margin-bottom:6px">Q${q.id}${mu?' · '+t().two:''}</div>
+<div style="font-size:15px;font-weight:500;line-height:1.6;margin-bottom:14px">${qT(q)}</div>
+<div class="t2" style="font-size:12px;font-weight:500;margin-bottom:6px">${t().yourA}:</div>${yh}
+<div class="t2" style="font-size:12px;font-weight:500;margin:12px 0 6px">${t().corrA}:</div>${ch}
+<div class="rv-hint"><b>${t().why}: </b>${qX(q)}</div></div>`;});
+h+='</div>';$('V-review').innerHTML=h;}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+(async function(){const sv=localStorage.getItem('awsqu');
+if(sv){try{const d=await db.collection('users').doc(sv).get();if(d.exists){curU=sv;await ldRes();rMenu();return;}}catch(e){console.error(e);}}
+rLogin();})();
+</script>
+</body>
+</html>
