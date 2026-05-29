@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AWS Quiz 管理後台</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f0eb;min-height:100vh;color:#1a1a1a}
+.header{background:#1a1a1a;color:#fff;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:10}
+.header h1{font-size:16px;font-weight:500}
+.container{max-width:960px;margin:0 auto;padding:1.5rem 1rem}
+.card{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:16px}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid rgba(0,0,0,.1)}
+.tab{padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#666;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none}
+.tab.active{color:#378ADD;border-bottom-color:#378ADD}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid rgba(0,0,0,.15);font-weight:500;color:#666;font-size:13px}
+td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08)}
+tr:hover td{background:#f8f8f5}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500}
+.badge-green{background:#E1F5EE;color:#0F6E56}
+.badge-red{background:#FCEBEB;color:#A32D2D}
+.badge-gray{background:#eee;color:#666}
+.btn1{padding:7px 18px;border:1px solid #378ADD;border-radius:8px;background:#378ADD;color:#fff;font-size:14px;cursor:pointer;font-weight:500;font-family:inherit}
+.btn-ghost{padding:6px 14px;border:1px solid rgba(0,0,0,.2);border-radius:8px;background:transparent;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;font-family:inherit}
+.stat-card{text-align:center;padding:1.5rem;border-radius:12px}
+.stat-num{font-size:32px;font-weight:500}
+.stat-label{font-size:13px;color:#666;margin-top:2px}
+.back-link{color:#378ADD;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:4px;margin-bottom:16px}
+.err-bar{height:20px;background:#E1F5EE;border-radius:4px;overflow:hidden;position:relative}
+.err-bar-fill{height:100%;background:#A32D2D;border-radius:4px}
+.err-bar-text{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:500}
+.loading{text-align:center;padding:3rem;color:#666;font-size:15px}
+.inp{width:100%;max-width:300px;padding:8px 12px;border:1px solid rgba(0,0,0,.2);border-radius:8px;font-size:14px;font-family:inherit;outline:none;margin-bottom:16px}
+.inp:focus{border-color:#378ADD}
+@media(max-width:600px){.container{padding:1rem .75rem}table{font-size:12px}th,td{padding:8px 6px}.stat-num{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 AWS Quiz 管理後台</h1>
+  <button class="btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.3);font-size:12px" onclick="loadData()">🔄 重新載入</button>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div id="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-users" onclick="switchTab('users')">👤 學生成績</button>
+    <button class="tab" id="tab-errors" onclick="switchTab('errors')">❌ 錯題分析</button>
+  </div>
+
+  <!-- Content -->
+  <div id="content"><div class="loading">載入中...</div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔧 FIREBASE CONFIG — 與 index.html 使用相同的設定
+// ═══════════════════════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyA5bcLezsAi40yypSYBLoYVpGUW4F1K3Og",
+  authDomain: "aws-quiz-ren.firebaseapp.com",
+  projectId: "aws-quiz-ren",
+  storageBucket: "aws-quiz-ren.firebasestorage.app",
+  messagingSenderId: "138689426138",
+  appId: "1:138689426138:web:e870580ff600a044926be3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Question titles for error analysis
+const Q_TITLES = {};
+const Q_DATA=[
+{id:1,q:"Snowball Edge — 哪些活動免費？"},{id:2,q:"評估漏洞的服務？(Inspector)"},{id:3,q:"EC2 訪問 S3 的最佳實踐？(IAM Role)"},
+{id:4,q:"DynamoDB 共享責任？(訪問控制)"},{id:5,q:"CAF 基礎能力觀點？(治理)"},{id:6,q:"Docker 叢集管理替代？(Fargate)"},
+{id:7,q:"EC2 上 NoSQL — AWS 責任？(實體基礎設施)"},{id:8,q:"EC2 rightsizing 工具？(Cost Explorer + Compute Optimizer)"},
+{id:9,q:"Trusted Advisor 好處？(成本+安全)"},{id:10,q:"遷移到 AWS 的優勢？(消除資料中心費用)"},
+{id:11,q:"管理 IaC 模板？(Service Catalog)"},{id:12,q:"視覺化支出？(Cost Explorer)"},
+{id:13,q:"探索+視覺化資料？(Glue + QuickSight)"},{id:14,q:"全球遷移專家？(Professional Services)"},
+{id:15,q:"2個月不可停機？(On-Demand)"},{id:16,q:"快速部署應用？(Elastic Beanstalk)"},
+{id:17,q:"防意外刪除 S3？(Versioning)"},{id:18,q:"基礎設施即程式碼？(CloudFormation)"},
+{id:19,q:"1年穩定流量？(Reserved Instances)"},{id:20,q:"專用網路連接？(Direct Connect)"},
+{id:21,q:"實體位置？(Region)"},{id:22,q:"保護資訊的 WAF 支柱？(Security)"},
+{id:23,q:"Internet Gateway 目的？(VPC-Internet 通訊)"},{id:24,q:"單體轉微服務？(鬆散耦合)"},
+{id:25,q:"審計憑證輪換？(IAM credential report)"},{id:26,q:"成本閾值通知？(Budgets + CloudWatch)"},
+{id:27,q:"客戶責任？(安全群組+資產分類)"},{id:28,q:"WAF 支柱？(可靠性+卓越營運)"},
+{id:29,q:"發送簡訊和郵件？(SNS)"},{id:30,q:"程式化訪問？(Access keys)"},
+{id:31,q:"容錯批次作業？(Spot)"},{id:32,q:"敏捷性？(快速實施+快速實驗)"},
+{id:33,q:"阻止 SQL 注入？(WAF)"},{id:34,q:"外部共享識別？(IAM Access Analyzer)"},
+{id:35,q:"合規報告？(Artifact)"},{id:36,q:"遷移後客戶成本？(軟體授權)"},
+{id:37,q:"IAM 最佳實踐？(MFA)"},{id:38,q:"彈性？(調整資源+獲取資源)"},
+{id:39,q:"審計 API 呼叫？(CloudTrail)"},{id:40,q:"Lambda 客戶責任？(程式碼)"},
+{id:41,q:"S3 偶爾查詢？(Athena)"},{id:42,q:"免費服務？(Organizations)"},
+{id:43,q:"CAF 人員能力？(雲端流暢度)"},{id:44,q:"預先承諾最低成本？(RI + Savings Plans)"},
+{id:45,q:"選擇 RDS 部署區域？(Regions)"},{id:46,q:"部署前估算成本？(Pricing Calculator)"},
+{id:47,q:"全球低延遲交付？(CloudFront)"},{id:48,q:"規模經濟效益？(較低可變成本)"},
+{id:49,q:"定義資源為程式碼？(CDK)"},{id:50,q:"臨時憑證？(STS)"}
+];
+Q_DATA.forEach(q => Q_TITLES[q.id] = q.q);
+
+let allUsers = [], allRecords = [], currentTab = 'users';
+
+async function loadData() {
+  document.getElementById('content').innerHTML = '<div class="loading">載入中...</div>';
+  try {
+    // Load users
+    const uSnap = await db.collection('users').get();
+    allUsers = [];
+    uSnap.forEach(doc => allUsers.push({ username: doc.id, ...doc.data() }));
+
+    // Load records
+    const rSnap = await db.collection('records').get();
+    allRecords = [];
+    rSnap.forEach(doc => allRecords.push(doc.data()));
+
+    renderStats();
+    renderTab();
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="card" style="color:#A32D2D">載入失敗: ${e.message}<br><br>請確認 Firebase 設定正確。</div>`;
+  }
+}
+
+function renderStats() {
+  const totalUsers = allUsers.length;
+  const totalExams = allRecords.length;
+  const avgScore = totalExams > 0 ? Math.round(allRecords.reduce((s, r) => s + (r.score / r.total) * 100, 0) / totalExams) : 0;
+  const passCount = allRecords.filter(r => (r.score / r.total) >= 0.72).length;
+  const passRate = totalExams > 0 ? Math.round(passCount / totalExams * 100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="card stat-card" style="background:#E6F1FB">
+      <div class="stat-num" style="color:#378ADD">${totalUsers}</div><div class="stat-label">註冊學生</div></div>
+    <div class="card stat-card" style="background:#f5f5f0">
+      <div class="stat-num">${totalExams}</div><div class="stat-label">作答次數</div></div>
+    <div class="card stat-card" style="background:#E1F5EE">
+      <div class="stat-num" style="color:#0F6E56">${avgScore}%</div><div class="stat-label">平均分數</div></div>
+    <div class="card stat-card" style="background:#FFF8E6">
+      <div class="stat-num" style="color:#B8860B">${passRate}%</div><div class="stat-label">及格率</div></div>`;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  renderTab();
+}
+
+function renderTab() {
+  if (currentTab === 'users') renderUsers();
+  else renderErrors();
+}
+
+// ── USERS TAB ─────────────────────────────────────────────────────────────────
+function renderUsers() {
+  const c = document.getElementById('content');
+  if (!allUsers.length) { c.innerHTML = '<div class="card" style="text-align:center;color:#666;padding:2rem">尚無學生註冊</div>'; return; }
+
+  // Search
+  let html = '<input class="inp" placeholder="🔍 搜尋學生名稱..." oninput="filterUsers(this.value)" id="user-search"/>';
+  html += '<div id="user-table-wrap">';
+  html += buildUserTable(allUsers);
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+function buildUserTable(users) {
+  let html = '<table><thead><tr><th>學生名稱</th><th>考卷 1 成績</th><th>錯題數</th><th>作答時間</th><th>操作</th></tr></thead><tbody>';
+  users.forEach(u => {
+    const rec = allRecords.find(r => r.username === u.username && r.setId === 1);
+    if (rec) {
+      const pct = Math.round(rec.score / rec.total * 100);
+      const badge = pct >= 72 ? 'badge-green' : 'badge-red';
+      const errCnt = rec.errors ? rec.errors.length : 0;
+      const dt = rec.date ? new Date(rec.date).toLocaleDateString() : '-';
+      html += `<tr>
+        <td><strong>${u.username}</strong></td>
+        <td><span class="badge ${badge}">${rec.score}/${rec.total} (${pct}%)</span></td>
+        <td>${errCnt > 0 ? `<span style="color:#A32D2D;font-weight:500">${errCnt} 題</span>` : '<span style="color:#0F6E56">0</span>'}</td>
+        <td style="color:#666;font-size:12px">${dt}</td>
+        <td><button class="btn-sm btn-ghost" onclick="showUserDetail('${u.username}')">📋 詳情</button></td>
+      </tr>`;
+    } else {
+      html += `<tr><td><strong>${u.username}</strong></td><td><span class="badge badge-gray">未作答</span></td><td>-</td><td>-</td><td>-</td></tr>`;
+    }
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function filterUsers(val) {
+  const filtered = allUsers.filter(u => u.username.toLowerCase().includes(val.toLowerCase()));
+  document.getElementById('user-table-wrap').innerHTML = buildUserTable(filtered);
+}
+
+function showUserDetail(username) {
+  const recs = allRecords.filter(r => r.username === username);
+  const c = document.getElementById('content');
+  let html = `<span class="back-link" onclick="renderUsers()">← 返回列表</span>`;
+  html += `<h2 style="font-size:18px;font-weight:500;margin-bottom:16px">👤 ${username} 的作答紀錄</h2>`;
+
+  if (!recs.length) {
+    html += '<div class="card" style="color:#666">此學生尚無作答紀錄。</div>';
+    c.innerHTML = html; return;
+  }
+
+  recs.forEach(rec => {
+    const pct = Math.round(rec.score / rec.total * 100);
+    const pass = pct >= 72;
+    html += `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div><strong>考卷 ${rec.setId}</strong> <span class="badge ${pass ? 'badge-green' : 'badge-red'}">${pct}%</span></div>
+        <span style="font-size:12px;color:#666">${rec.date ? new Date(rec.date).toLocaleString() : ''}</span>
+      </div>
+      <div style="display:flex;gap:24px;margin-bottom:12px">
+        <div><span style="color:#0F6E56;font-weight:500;font-size:20px">${rec.score}</span> <span style="color:#666;font-size:13px">得分</span></div>
+        <div><span style="color:#A32D2D;font-weight:500;font-size:20px">${rec.errors ? rec.errors.length : 0}</span> <span style="color:#666;font-size:13px">錯題</span></div>
+        <div><span style="font-weight:500;font-size:20px">${rec.total}</span> <span style="color:#666;font-size:13px">總分</span></div>
+      </div>`;
+
+    if (rec.errors && rec.errors.length > 0) {
+      html += '<div style="font-size:13px;font-weight:500;color:#666;margin-bottom:8px">錯題明細：</div>';
+      html += '<table style="font-size:13px"><thead><tr><th>題號</th><th>題目</th><th>學生選</th><th>正確答案</th></tr></thead><tbody>';
+      rec.errors.forEach(err => {
+        const title = Q_TITLES[err.qid] || 'Q' + err.qid;
+        const uAns = (err.userAns || []).map(i => String.fromCharCode(65 + i)).join(', ') || '未作答';
+        const cAns = (err.correct || []).map(i => String.fromCharCode(65 + i)).join(', ');
+        html += `<tr><td>Q${err.qid}</td><td>${title}</td><td style="color:#A32D2D;font-weight:500">${uAns}</td><td style="color:#0F6E56;font-weight:500">${cAns}</td></tr>`;
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
+}
+
+// ── ERRORS TAB ────────────────────────────────────────────────────────────────
+function renderErrors() {
+  const c = document.getElementById('content');
+  // Count error frequency
+  const errCount = {};
+  allRecords.forEach(rec => {
+    if (!rec.errors) return;
+    rec.errors.forEach(err => {
+      errCount[err.qid] = (errCount[err.qid] || 0) + 1;
+    });
+  });
+
+  const sorted = Object.entries(errCount).sort((a, b) => b[1] - a[1]);
+  const totalExams = allRecords.length || 1;
+
+  if (!sorted.length) {
+    c.innerHTML = '<div class="card" style="text-align:center;color:#666;padding:2rem">尚無錯題資料</div>';
+    return;
+  }
+
+  let html = '<div class="card"><h3 style="font-size:15px;font-weight:500;margin-bottom:4px">錯題排行榜</h3><p style="font-size:13px;color:#666;margin-bottom:16px">依全體學生答錯次數排序，幫助您識別需要加強教學的知識點。</p>';
+  html += '<table><thead><tr><th>排名</th><th>題號</th><th>題目摘要</th><th>答錯次數</th><th style="min-width:120px">答錯比例</th></tr></thead><tbody>';
+
+  sorted.forEach(([qid, cnt], idx) => {
+    const title = Q_TITLES[parseInt(qid)] || 'Q' + qid;
+    const rate = Math.round(cnt / totalExams * 100);
+    const barColor = rate > 60 ? '#A32D2D' : rate > 30 ? '#B8860B' : '#0F6E56';
+    html += `<tr>
+      <td style="font-weight:500;color:#666">#${idx + 1}</td>
+      <td><strong>Q${qid}</strong></td>
+      <td style="font-size:13px">${title}</td>
+      <td style="font-weight:500">${cnt} 人</td>
+      <td><div class="err-bar"><div class="err-bar-fill" style="width:${rate}%;background:${barColor}"></div><span class="err-bar-text">${rate}%</span></div></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+
+  // Per-question detail: who got it wrong
+  html += '<div class="card" style="margin-top:16px"><h3 style="font-size:15px;font-weight:500;margin-bottom:12px">各題答錯學生名單</h3>';
+  sorted.slice(0, 20).forEach(([qid, cnt]) => {
+    const title = Q_TITLES[parseInt(qid)] || 'Q' + qid;
+    const wrongUsers = [];
+    allRecords.forEach(rec => {
+      if (!rec.errors) return;
+      if (rec.errors.some(e => e.qid === parseInt(qid))) wrongUsers.push(rec.username);
+    });
+    html += `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,.06)">
+      <strong>Q${qid}</strong> <span style="color:#666;font-size:13px">${title}</span><br>
+      <span style="color:#A32D2D;font-size:13px">${wrongUsers.join('、')}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  c.innerHTML = html;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

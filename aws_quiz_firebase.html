@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AWS CLF-C02 練習題</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f0eb;min-height:100vh;color:#1a1a1a}
+@media(prefers-color-scheme:dark){body{background:#1c1c1a;color:#e8e8e4}
+.card,.header,.modal-box{background:#2a2a28!important;border-color:rgba(255,255,255,.1)!important}
+.opt-btn{background:#2a2a28!important;border-color:rgba(255,255,255,.12)!important;color:#e8e8e4!important}
+.opt-btn:hover:not(.revealed){background:#333!important}
+.sec-bg{background:#232321!important}
+.txt2{color:#9a9a96!important}
+.tag-gray{background:#333!important;color:#9a9a96!important}
+.inp{background:#333!important;color:#e8e8e4!important;border-color:rgba(255,255,255,.2)!important}
+.btn-ghost{color:#e8e8e4!important;border-color:rgba(255,255,255,.2)!important}
+}
+.header{background:#fff;border-bottom:1px solid rgba(0,0,0,.1);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:10}
+.card{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:12px}
+.opt-btn{width:100%;display:flex;align-items:flex-start;gap:10px;padding:.75rem 1rem;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;background:#fff;font-size:14px;color:#1a1a1a;line-height:1.5;text-align:left;font-family:inherit;margin-bottom:8px}
+.opt-btn:hover:not(.revealed){background:#f5f5f0;border-color:rgba(0,0,0,.22)}
+.opt-btn.correct{border-color:#1D9E75!important;background:#E1F5EE!important}
+.opt-btn.wrong{border-color:#A32D2D!important;background:#FCEBEB!important}
+.opt-btn.missed{border-color:#1D9E75!important;border-style:dashed!important;background:transparent!important}
+.opt-btn.sel-multi{border-color:#378ADD!important;background:#E6F1FB!important}
+.txt2{color:#666;font-size:13px}
+.sec-bg{background:#f5f5f0;border-radius:8px;padding:.75rem 1rem}
+.btn1{padding:7px 18px;border:1px solid #378ADD;border-radius:8px;background:#378ADD;color:#fff;font-size:14px;cursor:pointer;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-ghost{padding:6px 14px;border:1px solid rgba(0,0,0,.2);border-radius:8px;background:transparent;font-size:13px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-danger{border-color:#A32D2D!important;color:#A32D2D!important}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;margin-left:6px}
+.tag-green{background:#E1F5EE;color:#0F6E56}
+.tag-gray{background:#eee;color:#666}
+.progress-bar{height:4px;background:rgba(0,0,0,.08);border-radius:4px;overflow:hidden;margin-bottom:20px}
+.progress-fill{height:100%;background:#378ADD;border-radius:4px;transition:width .3s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-box{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.75rem 1.5rem;max-width:360px;width:90%}
+.inp{width:100%;padding:10px 14px;border:1px solid rgba(0,0,0,.2);border-radius:8px;font-size:15px;font-family:inherit;outline:none}
+.inp:focus{border-color:#378ADD}
+.err-text{color:#A32D2D;font-size:13px;margin-top:6px;min-height:20px}
+.link{color:#378ADD;cursor:pointer;text-decoration:underline;font-size:14px}
+.hidden{display:none!important}
+.container{max-width:720px;margin:0 auto;padding:1.5rem 1rem}
+.container-sm{max-width:480px;margin:0 auto;padding:2rem 1rem}
+.explain-box{background:#f5f5f0;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:1rem 1.25rem;margin-top:12px;font-size:13px;line-height:1.7}
+.review-ans{display:flex;align-items:center;gap:8px;padding:.5rem .9rem;border-radius:8px;font-size:13px;margin-bottom:5px}
+.review-correct{border:1px solid #1D9E75;background:#E1F5EE}
+.review-wrong{border:1px solid #A32D2D;background:#FCEBEB}
+.review-hint{background:#f5f5f0;border-radius:8px;padding:.75rem 1rem;font-size:13px;line-height:1.7;border-left:3px solid #378ADD;margin-top:4px}
+@media(max-width:600px){.container,.container-sm{padding:1rem .75rem}.card{padding:1rem}.header{padding:0 .75rem}}
+</style>
+</head>
+<body>
+<div class="header" id="header"><div id="hl"></div><div id="hr" style="display:flex;gap:8px;align-items:center"></div></div>
+<div id="V-login"></div><div id="V-menu" class="hidden"></div><div id="V-exam" class="hidden"></div>
+<div id="V-result" class="hidden"></div><div id="V-review" class="hidden"></div>
+<div class="modal-overlay hidden" id="modal"><div class="modal-box"><div id="m-title" style="font-weight:500;font-size:16px;margin-bottom:8px"></div><div id="m-desc" class="txt2" style="line-height:1.6;margin-bottom:20px"></div><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-ghost" id="m-cancel" onclick="closeModal()"></button><button id="m-ok" class="btn1"></button></div></div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔧 FIREBASE CONFIG — 請替換成你自己的 Firebase 設定
+// ═══════════════════════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyA5bcLezsAi40yypSYBLoYVpGUW4F1K3Og",
+  authDomain: "aws-quiz-ren.firebaseapp.com",
+  projectId: "aws-quiz-ren",
+  storageBucket: "aws-quiz-ren.firebasestorage.app",
+  messagingSenderId: "138689426138",
+  appId: "1:138689426138:web:e870580ff600a044926be3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const T={
+en:{title:"AWS CLF-C02 Practice",subtitle:"Cloud Practitioner Exam",login:"Login",register:"Create Account",username:"Username",loginBtn:"Login",registerBtn:"Register",noUser:"Account not found",userExists:"Username already taken",enterName:"Please enter a username",back:"← Back",logout:"Logout",examSet:"Set",start:"Start",review:"Errors",retake:"Retake",prev:"Prev",next:"Next",check:"Confirm",submit:"Submit",earlySubmit:"Submit Early",earlySubmitConfirm:"Submit now?",earlySubmitDesc:"Answered {n}/{total}. Unanswered = wrong.",confirm:"Confirm",cancel:"Cancel",passed:"Passed! 🎉",failed:"Keep Practicing",passMark:"Pass: 72%",correctAnswer:"Answer",whyCorrect:"Explanation",whyWrong:"Why others are wrong",chooseTwo:"Choose TWO",selected:"selected",errorReview:"Error Review",noErrors:"No errors!",lang:"中文",notStarted:"Not started",perQ:"2 pts each",progress:"Progress",deleteRecord:"Delete",deleteConfirm:"Delete record?",deleteDesc:"Permanently remove this exam record.",takenOn:"Date",unanswered:"Unanswered",yourAns:"Your answer",correctAns:"Correct answer",score:"Score",wrong:"Wrong",total:"Total",completed:"Done",questions:"Qs",hi:"Hi",wrongPts:"Wrong pts",totalPts:"Total"},
+zh:{title:"AWS CLF-C02 練習題",subtitle:"雲端從業人員認證考試",login:"登入",register:"建立帳號",username:"使用者名稱",loginBtn:"登入",registerBtn:"建立帳號",noUser:"查無此帳戶",userExists:"此名稱已被使用",enterName:"請輸入使用者名稱",back:"← 返回",logout:"登出",examSet:"考卷",start:"開始考試",review:"查看錯題",retake:"重新作答",prev:"上一題",next:"下一題",check:"確認答案",submit:"交卷",earlySubmit:"提前交卷",earlySubmitConfirm:"確定要提前交卷嗎？",earlySubmitDesc:"已作答 {n}/{total} 題，未作答計為答錯。",confirm:"確認交卷",cancel:"取消",passed:"恭喜通過！🎉",failed:"繼續加油",passMark:"及格線：72%",correctAnswer:"正確答案",whyCorrect:"解析",whyWrong:"其他選項錯誤原因",chooseTwo:"請選擇兩個答案",selected:"已選",errorReview:"錯題回顧",noErrors:"沒有錯題，表現優異！",lang:"English",notStarted:"尚未作答",perQ:"每題 2 分",progress:"進度",deleteRecord:"刪除紀錄",deleteConfirm:"確定要刪除此紀錄？",deleteDesc:"這將永久移除此考卷的成績與錯題紀錄。",takenOn:"作答時間",unanswered:"未作答",yourAns:"您的作答",correctAns:"正確答案",score:"得分",wrong:"答錯",total:"總分",completed:"已完成",questions:"題",hi:"你好",wrongPts:"答錯分",totalPts:"總分"}
+};
+
+// ── QUESTION DATA ─────────────────────────────────────────────────────────────
+const Q=[
+{id:1,en:{q:"A company plans to use an Amazon Snowball Edge device to transfer files to the AWS Cloud. Which activities are available at no cost?",o:["Use of the Snowball Edge appliance for a 10-day period","The transfer of data out of Amazon S3 and to the Snowball Edge appliance","The transfer of data from the Snowball Edge appliance into Amazon S3","Daily use of the Snowball Edge appliance after 10 days"],x:"Data transfer INTO Amazon S3 is always free.",w:{"A":"Daily fee after 10 days.","B":"Data out of S3 incurs costs.","D":"Fees apply after 10 days."}},zh:{q:"一家公司計畫使用 Amazon Snowball Edge 裝置將檔案傳輸到 AWS 雲端。哪些活動是免費的？",o:["使用 Snowball Edge 裝置 10 天期間","將資料從 S3 傳出到 Snowball Edge","將資料從 Snowball Edge 傳入 Amazon S3","10 天後每日使用 Snowball Edge"],x:"傳入 Amazon S3 永遠免費。",w:{"A":"10 天後收取每日費用。","B":"從 S3 傳出會產生費用。","D":"超過 10 天後產生費用。"}},c:[2]},
+{id:2,en:{q:"A company needs to assess application vulnerabilities and identify infrastructure that doesn't meet best practices. Which service?",o:["AWS Trusted Advisor","Amazon Inspector","AWS Config","Amazon GuardDuty"],x:"Amazon Inspector continuously scans workloads for vulnerabilities.",w:{"A":"Trusted Advisor gives recommendations, not vulnerability scanning.","C":"Config tracks changes, not vulnerabilities.","D":"GuardDuty detects threats, not app vulnerabilities."}},zh:{q:"一家公司需要評估應用程式漏洞並識別不符合最佳實踐的部署。哪個服務？",o:["AWS Trusted Advisor","Amazon Inspector","AWS Config","Amazon GuardDuty"],x:"Amazon Inspector 持續掃描工作負載的漏洞。",w:{"A":"Trusted Advisor 提供建議，不掃描漏洞。","C":"Config 追蹤配置變更，不掃描漏洞。","D":"GuardDuty 偵測威脅，非應用程式漏洞。"}},c:[1]},
+{id:3,en:{q:"According to security best practices, how should an EC2 instance access an S3 bucket?",o:["Hard code IAM keys in the app","Store keys in a text file on EC2","Have EC2 assume a role","Modify S3 policy to allow any service"],x:"Attach an IAM role — EC2 gets temporary credentials automatically.",w:{"A":"Hardcoding keys is a security risk.","B":"Text files are insecure.","D":"Open S3 is a critical vulnerability."}},zh:{q:"根據安全最佳實踐，EC2 應如何訪問 S3？",o:["硬編碼 IAM 金鑰","將金鑰存在 EC2 文字檔","讓 EC2 承擔角色","修改 S3 策略允許任何服務"],x:"附加 IAM 角色，EC2 自動獲得臨時憑證。",w:{"A":"硬編碼金鑰有安全風險。","B":"文字檔不安全。","D":"開放 S3 是嚴重漏洞。"}},c:[2]},
+{id:4,en:{q:"Which is a customer responsibility when using DynamoDB under the Shared Responsibility Model?",o:["Physical security","Patching DynamoDB","Access to DynamoDB tables","Encryption at rest"],x:"Customers manage access via IAM policies.",w:{"A":"AWS handles physical security.","B":"AWS patches DynamoDB.","D":"AWS provides encryption options."}},zh:{q:"在共享責任模型下，使用 DynamoDB 時客戶負責什麼？",o:["實體安全","修補 DynamoDB","DynamoDB 資料表訪問控制","靜態資料加密"],x:"客戶透過 IAM 策略管理訪問。",w:{"A":"AWS 負責實體安全。","B":"AWS 負責修補。","D":"AWS 提供加密選項。"}},c:[2]},
+{id:5,en:{q:"Which perspective includes foundational capabilities of the AWS CAF?",o:["Sustainability","Performance efficiency","Governance","Reliability"],x:"Governance is one of 6 CAF perspectives: Business, People, Governance, Platform, Security, Operations.",w:{"A":"Sustainability is a WAF pillar.","B":"Performance efficiency is a WAF pillar.","D":"Reliability is a WAF pillar."}},zh:{q:"哪個是 AWS CAF 的基礎能力觀點？",o:["永續性","效能效率","治理","可靠性"],x:"治理是 CAF 六大觀點之一：業務、人員、治理、平台、安全性、營運。",w:{"A":"永續性是 WAF 支柱。","B":"效能效率是 WAF 支柱。","D":"可靠性是 WAF 支柱。"}},c:[2]},
+{id:6,en:{q:"A company manages Docker on EC2 and wants help with cluster management. Which service?",o:["AWS Lambda","Amazon RDS","AWS Fargate","Amazon Athena"],x:"Fargate is serverless compute for containers — no cluster management needed.",w:{"A":"Lambda is for functions.","B":"RDS is for databases.","D":"Athena is for queries."}},zh:{q:"一家公司在 EC2 管理 Docker，想要叢集管理的替代方案。哪個服務？",o:["AWS Lambda","Amazon RDS","AWS Fargate","Amazon Athena"],x:"Fargate 是容器的無伺服器運算——不需管理叢集。",w:{"A":"Lambda 用於函數。","B":"RDS 用於資料庫。","D":"Athena 用於查詢。"}},c:[2]},
+{id:7,en:{q:"Running NoSQL on EC2 — which task is AWS's responsibility?",o:["Update guest OS","Maintain DB high availability","Patch physical infrastructure","Configure security groups"],x:"AWS manages the physical infrastructure — hardware, networking, facilities.",w:{"A":"Customer patches guest OS.","B":"Customer manages DB HA on EC2.","D":"Customer configures security groups."}},zh:{q:"在 EC2 上運行 NoSQL，哪個是 AWS 的責任？",o:["更新訪客 OS","維護 DB 高可用性","修補實體基礎設施","配置安全群組"],x:"AWS 負責實體基礎設施——硬體、網路、設施。",w:{"A":"客戶修補訪客 OS。","B":"客戶在 EC2 上管理 DB 高可用性。","D":"客戶配置安全群組。"}},c:[2]},
+{id:8,en:{q:"Which services identify EC2 rightsizing opportunities? (Choose TWO)",o:["AWS Cost Explorer","AWS Billing Conductor","Amazon CodeGuru","Amazon SageMaker","AWS Compute Optimizer"],x:"Cost Explorer and Compute Optimizer both provide rightsizing recommendations.",w:{"B":"Billing Conductor customizes billing.","C":"CodeGuru reviews code.","D":"SageMaker is for ML."},m:1},zh:{q:"哪些服務可識別 EC2 適當調整機會？（選兩個）",o:["AWS Cost Explorer","AWS Billing Conductor","Amazon CodeGuru","Amazon SageMaker","AWS Compute Optimizer"],x:"Cost Explorer 和 Compute Optimizer 都提供適當調整建議。",w:{"B":"Billing Conductor 自訂計費。","C":"CodeGuru 審查程式碼。","D":"SageMaker 用於 ML。"},m:1},c:[0,4]},
+{id:9,en:{q:"Benefits of AWS Trusted Advisor? (Choose TWO)",o:["Container orchestration","Encryption key rotation","Detecting underutilized resources","Proactively monitoring security","Enforced tagging"],x:"Trusted Advisor checks for cost savings and security vulnerabilities.",w:{"A":"ECS/EKS handle containers.","B":"KMS handles keys.","E":"SCPs/Config handle tagging."},m:1},zh:{q:"AWS Trusted Advisor 的好處？（選兩個）",o:["容器編排","加密金鑰輪換","偵測未充分利用的資源","主動監控安全","強制標記"],x:"Trusted Advisor 檢查成本節省和安全漏洞。",w:{"A":"ECS/EKS 處理容器。","B":"KMS 處理金鑰。","E":"SCP/Config 處理標記。"},m:1},c:[2,3]},
+{id:10,en:{q:"Which advantage do users get when moving to AWS Cloud?",o:["Eliminate data center expenses","Same discounts as hardware vendors","All controls to AWS","Eliminate operational expenses"],x:"Moving to AWS eliminates capital expenditures for physical data centers.",w:{"B":"AWS uses economies of scale, not vendor discounts.","C":"Customers retain controls.","D":"OpEx still exists, shifts from CapEx."}},zh:{q:"遷移到 AWS 雲端的優勢？",o:["消除資料中心費用","與硬體商相同折扣","所有控制交給 AWS","消除營運費用"],x:"遷移到 AWS 消除了實體資料中心的資本支出。",w:{"B":"AWS 使用規模經濟。","C":"客戶保留控制。","D":"營運費用仍存在，從資本支出轉為可變成本。"}},c:[0]},
+{id:11,en:{q:"Which service manages IT services and governs IaC templates?",o:["Resource Explorer","Service Catalog","Organizations","Systems Manager"],x:"Service Catalog manages approved IT service portfolios and IaC templates.",w:{"A":"Resource Explorer discovers resources.","C":"Organizations manages accounts.","D":"Systems Manager automates operations."}},zh:{q:"哪個服務管理 IT 服務並治理 IaC 模板？",o:["Resource Explorer","Service Catalog","Organizations","Systems Manager"],x:"Service Catalog 管理已核准的 IT 服務組合和 IaC 模板。",w:{"A":"Resource Explorer 探索資源。","C":"Organizations 管理帳戶。","D":"Systems Manager 自動化操作。"}},c:[1]},
+{id:12,en:{q:"Which service helps visualize and manage spending over time?",o:["Organizations","Pricing Calculator","Cost Explorer","Service Catalog"],x:"Cost Explorer provides interactive graphs for historical cost analysis.",w:{"A":"Organizations manages accounts.","B":"Pricing Calculator estimates future costs.","D":"Service Catalog manages services."}},zh:{q:"哪個服務幫助視覺化和管理支出？",o:["Organizations","Pricing Calculator","Cost Explorer","Service Catalog"],x:"Cost Explorer 提供互動式圖表進行歷史成本分析。",w:{"A":"Organizations 管理帳戶。","B":"Pricing Calculator 估算未來成本。","D":"Service Catalog 管理服務。"}},c:[2]},
+{id:13,en:{q:"Discover, transform, and visualize data — which combination? (Choose TWO)",o:["AWS Glue","Amazon EFS","Amazon Redshift","Amazon QuickSight","Amazon QLDB"],x:"Glue for ETL, QuickSight for visualization.",w:{"B":"EFS is a file system.","C":"Redshift is a warehouse, no direct viz.","E":"QLDB is a ledger database."},m:1},zh:{q:"探索、轉換和視覺化資料——哪種組合？（選兩個）",o:["AWS Glue","Amazon EFS","Amazon Redshift","Amazon QuickSight","Amazon QLDB"],x:"Glue 用於 ETL，QuickSight 用於視覺化。",w:{"B":"EFS 是檔案系統。","C":"Redshift 是倉儲，無直接視覺化。","E":"QLDB 是帳本資料庫。"},m:1},c:[0,3]},
+{id:14,en:{q:"Global experts to help migrate to AWS faster. Which resource?",o:["AWS Support","Professional Services","Launch Wizard","Managed Services"],x:"Professional Services is AWS's global migration consulting team.",w:{"A":"Support provides tech support, not consulting.","C":"Launch Wizard deploys specific workloads.","D":"AMS provides ongoing management."}},zh:{q:"全球專家幫助更快遷移到 AWS。哪個資源？",o:["AWS Support","Professional Services","Launch Wizard","Managed Services"],x:"Professional Services 是 AWS 的全球遷移諮詢團隊。",w:{"A":"Support 提供技術支援，不是諮詢。","C":"Launch Wizard 部署特定工作負載。","D":"AMS 提供持續管理。"}},c:[1]},
+{id:15,en:{q:"App runs 2 months/year, no downtime allowed. Most cost-effective EC2 option?",o:["Reserved Instances","Dedicated Hosts","Spot Instances","On-Demand Instances"],x:"On-Demand is best for short-term, uninterruptible workloads.",w:{"A":"RI needs 1-3 year commitment.","B":"Dedicated Hosts are expensive.","C":"Spot can be interrupted."}},zh:{q:"應用每年運行 2 個月，不可停機。最具成本效益的 EC2 選項？",o:["預留執行個體","專用主機","競價執行個體","隨需執行個體"],x:"隨需最適合短期、不可中斷的工作負載。",w:{"A":"RI 需要 1-3 年承諾。","B":"專用主機費用高。","C":"競價可被中斷。"}},c:[3]},
+{id:16,en:{q:"Deploy app quickly without manual resource creation. Which service?",o:["Amazon EC2","Elastic Beanstalk","CodeBuild","Personalize"],x:"Elastic Beanstalk auto-handles provisioning, load balancing, and scaling.",w:{"A":"EC2 needs manual setup.","C":"CodeBuild is for CI/CD builds.","D":"Personalize is ML for recommendations."}},zh:{q:"快速部署應用不需手動建立資源。哪個服務？",o:["Amazon EC2","Elastic Beanstalk","CodeBuild","Personalize"],x:"Elastic Beanstalk 自動處理佈建、負載均衡和擴展。",w:{"A":"EC2 需手動設定。","C":"CodeBuild 是 CI/CD 構建。","D":"Personalize 是推薦 ML。"}},c:[1]},
+{id:17,en:{q:"Protect S3 data from accidental deletion/overwriting. Which feature?",o:["Lifecycle rules","Versioning","Bucket policies","Server-side encryption"],x:"Versioning preserves every version of every object for recovery.",w:{"A":"Lifecycle transitions/expires objects.","C":"Policies control access, not overwriting.","D":"Encryption protects confidentiality."}},zh:{q:"保護 S3 資料免受意外刪除或覆寫。哪個功能？",o:["生命週期規則","版本控制","儲存桶策略","伺服器端加密"],x:"版本控制保留每個物件的每個版本以供恢復。",w:{"A":"生命週期自動轉換或過期物件。","C":"策略控制訪問，不防覆寫。","D":"加密保護機密性。"}},c:[1]},
+{id:18,en:{q:"Which service manages infrastructure as code?",o:["CodePipeline","CodeDeploy","Direct Connect","CloudFormation"],x:"CloudFormation provisions AWS resources using JSON/YAML templates.",w:{"A":"CodePipeline is CI/CD.","B":"CodeDeploy deploys apps.","C":"Direct Connect is dedicated networking."}},zh:{q:"哪個服務管理基礎設施即程式碼？",o:["CodePipeline","CodeDeploy","Direct Connect","CloudFormation"],x:"CloudFormation 使用 JSON/YAML 模板佈建 AWS 資源。",w:{"A":"CodePipeline 是 CI/CD。","B":"CodeDeploy 部署應用。","C":"Direct Connect 是專用網路。"}},c:[3]},
+{id:19,en:{q:"EC2 for 1 year, steady traffic, must stay online. Most cost-effective option?",o:["On-Demand","Reserved Instances","Spot Instances","Spot Fleet"],x:"Reserved Instances offer up to 72% off for 1-year steady workloads.",w:{"A":"On-Demand costs more long-term.","C":"Spot can be interrupted.","D":"Spot Fleet still uses interruptible Spot."}},zh:{q:"EC2 運行 1 年，流量穩定，必須在線。最具成本效益？",o:["隨需","預留執行個體","競價","競價群"],x:"預留執行個體為 1 年穩定工作負載提供高達 72% 折扣。",w:{"A":"長期使用隨需成本更高。","C":"競價可被中斷。","D":"競價群仍使用可中斷的競價。"}},c:[1]},
+{id:20,en:{q:"Dedicated network connection from on-premises to AWS?",o:["Direct Connect","VPC peering","AWS VPN","Route 53"],x:"Direct Connect provides a dedicated, private connection bypassing the internet.",w:{"B":"VPC peering connects VPCs, not on-prem.","C":"VPN uses public internet.","D":"Route 53 is DNS."}},zh:{q:"從本地到 AWS 的專用網路連接？",o:["Direct Connect","VPC 對等連接","AWS VPN","Route 53"],x:"Direct Connect 提供繞過網際網路的專用私有連接。",w:{"B":"VPC 對等連接連接 VPC，非本地。","C":"VPN 使用公共網際網路。","D":"Route 53 是 DNS。"}},c:[0]},
+{id:21,en:{q:"Physical location of AWS global infrastructure?",o:["DataSync","Region","Connect","Organizations"],x:"An AWS Region is a physical geographic area with multiple Availability Zones.",w:{"A":"DataSync is a data transfer service.","C":"Connect is a contact center.","D":"Organizations manages accounts."}},zh:{q:"AWS 全球基礎設施的實體位置？",o:["DataSync","區域","Connect","Organizations"],x:"AWS 區域是擁有多個可用區的實體地理區域。",w:{"A":"DataSync 是資料傳輸服務。","C":"Connect 是客服中心。","D":"Organizations 管理帳戶。"}},c:[1]},
+{id:22,en:{q:"Protect information and assets with risk assessment. Which WAF pillar?",o:["Reliability","Security","Operational excellence","Performance efficiency"],x:"The Security pillar covers protecting information, risk assessment, and threat mitigation.",w:{"A":"Reliability = recovery/availability.","C":"OpEx = running systems effectively.","D":"Perf = efficient resource use."}},zh:{q:"保護資訊和資產並進行風險評估。哪個 WAF 支柱？",o:["可靠性","安全性","卓越營運","效能效率"],x:"安全性支柱涵蓋保護資訊、風險評估和威脅緩解。",w:{"A":"可靠性 = 恢復/可用性。","C":"卓越營運 = 有效運行系統。","D":"效能 = 有效使用資源。"}},c:[1]},
+{id:23,en:{q:"Purpose of an internet gateway in a VPC?",o:["Create VPN connection","Allow VPC-internet communication","Impose bandwidth constraints","Load balance traffic"],x:"An internet gateway enables communication between VPC and the internet.",w:{"A":"VPN uses a virtual private gateway.","C":"IGW doesn't impose bandwidth limits.","D":"Load balancing uses ELB."}},zh:{q:"VPC 中網際網路閘道的目的？",o:["建立 VPN 連接","允許 VPC 與網際網路通訊","施加頻寬限制","平衡流量"],x:"網際網路閘道可讓 VPC 與網際網路之間通訊。",w:{"A":"VPN 使用虛擬私有閘道。","C":"IGW 不施加頻寬限制。","D":"負載均衡使用 ELB。"}},c:[1]},
+{id:24,en:{q:"Migrating monolith to microservices follows which WAF best practice?",o:["Functional testing in deployment","Automation for changes","Deploy to multiple locations","Loosely coupled dependencies"],x:"Microservices = loose coupling — independent operation, reduced blast radius.",w:{"A":"Testing is OpEx, not microservices.","B":"Automation is OpEx.","C":"Multi-location is reliability."}},zh:{q:"單體應用遷移到微服務遵循哪個 WAF 最佳實踐？",o:["部署中整合功能測試","自動化部署變更","部署到多個位置","實施鬆散耦合"],x:"微服務 = 鬆散耦合——獨立運行，減少故障範圍。",w:{"A":"測試是卓越營運，非微服務。","B":"自動化是卓越營運。","C":"多位置是可靠性。"}},c:[3]},
+{id:25,en:{q:"Audit password and access key rotation for compliance?",o:["IAM Access Analyzer","AWS Artifact","IAM credential report","Audit Manager"],x:"IAM credential report lists all users' credential status — ages, rotation dates.",w:{"A":"Access Analyzer finds external sharing.","B":"Artifact provides AWS compliance docs.","D":"Audit Manager automates evidence collection."}},zh:{q:"審計密碼和金鑰輪換以滿足合規？",o:["IAM Access Analyzer","AWS Artifact","IAM 憑證報告","Audit Manager"],x:"IAM 憑證報告列出所有使用者的憑證狀態——年齡、輪換日期。",w:{"A":"Access Analyzer 查找外部共享。","B":"Artifact 提供 AWS 合規文件。","D":"Audit Manager 自動化證據收集。"}},c:[2]},
+{id:26,en:{q:"Notification when cost threshold reached? (Choose TWO)",o:["SQS","Budgets","Cost Explorer","CloudWatch","Cost & Usage Report"],x:"Budgets sends alerts on thresholds. CloudWatch creates billing alarms via SNS.",w:{"A":"SQS is a message queue.","C":"Cost Explorer visualizes, no alerts.","E":"CUR exports raw data."},m:1},zh:{q:"達到成本閾值時收到通知？（選兩個）",o:["SQS","Budgets","Cost Explorer","CloudWatch","成本和使用報告"],x:"Budgets 在閾值時發送警報。CloudWatch 透過 SNS 建立計費警報。",w:{"A":"SQS 是訊息佇列。","C":"Cost Explorer 視覺化，無警報。","E":"CUR 匯出原始資料。"},m:1},c:[1,3]},
+{id:27,en:{q:"Customer responsibilities under shared model? (Choose TWO)",o:["Configure security groups","Classify company assets","Choose AZs for S3","Patch DynamoDB","Select EC2 for Lambda"],x:"Customers configure security groups and classify their own assets.",w:{"C":"AWS manages S3 AZ redundancy.","D":"AWS patches DynamoDB.","E":"Lambda is serverless."},m:1},zh:{q:"共享責任模型下客戶的責任？（選兩個）",o:["配置安全群組","分類公司資產","選擇 S3 可用區","修補 DynamoDB","選擇 EC2 運行 Lambda"],x:"客戶配置安全群組和分類自己的資產。",w:{"C":"AWS 管理 S3 可用區冗餘。","D":"AWS 修補 DynamoDB。","E":"Lambda 是無伺服器。"},m:1},c:[0,1]},
+{id:28,en:{q:"Which are WAF pillars? (Choose TWO)",o:["Availability","Reliability","Scalability","Responsive design","Operational excellence"],x:"WAF pillars: OpEx, Security, Reliability, Perf Efficiency, Cost Optimization, Sustainability.",w:{"A":"Availability is a concept, not a pillar.","C":"Scalability is a feature.","D":"Responsive design is web design."},m:1},zh:{q:"哪些是 WAF 支柱？（選兩個）",o:["可用性","可靠性","可擴展性","響應式設計","卓越營運"],x:"WAF 支柱：卓越營運、安全性、可靠性、效能效率、成本優化、永續性。",w:{"A":"可用性是概念，非支柱。","C":"可擴展性是特性。","D":"響應式設計是網頁設計。"},m:1},c:[1,4]},
+{id:29,en:{q:"Send both text and email from distributed apps?",o:["SNS","SES","CloudWatch alerts","SQS"],x:"SNS supports SMS + email to multiple subscribers.",w:{"B":"SES is email only.","C":"CloudWatch uses SNS to notify.","D":"SQS is a message queue."}},zh:{q:"從分散式應用發送簡訊和電子郵件？",o:["SNS","SES","CloudWatch 警報","SQS"],x:"SNS 支援 SMS + 電子郵件給多個訂閱者。",w:{"B":"SES 僅限電子郵件。","C":"CloudWatch 使用 SNS 通知。","D":"SQS 是訊息佇列。"}},c:[0]},
+{id:30,en:{q:"Programmatic access via CLI or API requires?",o:["Inspector","Access keys","SSH public keys","KMS keys"],x:"Access keys (key ID + secret) are required for CLI/API access.",w:{"A":"Inspector scans vulnerabilities.","C":"SSH keys are for EC2 login.","D":"KMS keys are for encryption."}},zh:{q:"透過 CLI 或 API 程式化訪問需要？",o:["Inspector","存取金鑰","SSH 公鑰","KMS 金鑰"],x:"存取金鑰（金鑰 ID + 密碼）是 CLI/API 訪問所必需的。",w:{"A":"Inspector 掃描漏洞。","C":"SSH 金鑰用於 EC2 登入。","D":"KMS 金鑰用於加密。"}},c:[1]},
+{id:31,en:{q:"Thousands of stateless, fault-tolerant simulations up to 3 hours. Best pricing?",o:["Reserved","Spot","On-Demand","Dedicated"],x:"Spot Instances — up to 90% off, ideal for fault-tolerant batch jobs.",w:{"A":"RI needs commitment for steady work.","C":"On-Demand costs more at scale.","D":"Dedicated is for compliance."}},zh:{q:"數千個無狀態、容錯的模擬，最長 3 小時。最佳定價？",o:["預留","競價","隨需","專用"],x:"競價執行個體——最高 90% 折扣，適合容錯批次作業。",w:{"A":"RI 需要穩定工作的承諾。","C":"大規模隨需成本更高。","D":"專用用於合規。"}},c:[1]},
+{id:32,en:{q:"Agility in AWS means? (Choose TWO)",o:["Speed of resource implementation","Speed of Region creation","Ability to experiment quickly","Elimination of wasted capacity","Low entry cost"],x:"Agility = fast provisioning + rapid experimentation.",w:{"B":"Region creation is infrastructure planning.","D":"Wasted capacity = elasticity.","E":"Low cost = economies of scale."},m:1},zh:{q:"AWS 敏捷性是什麼？（選兩個）",o:["實施資源的速度","建立區域的速度","快速實驗的能力","消除浪費的容量","低進入成本"],x:"敏捷性 = 快速佈建 + 快速實驗。",w:{"B":"區域建立是基礎設施規劃。","D":"浪費容量 = 彈性。","E":"低成本 = 規模經濟。"},m:1},c:[0,2]},
+{id:33,en:{q:"Block SQL injection attacks?",o:["WAF","Shield","Network ACLs","Security groups"],x:"AWS WAF filters web traffic to block SQL injection and XSS.",w:{"B":"Shield is for DDoS.","C":"NACLs work at network layer.","D":"SGs do IP/port filtering."}},zh:{q:"阻止 SQL 注入攻擊？",o:["WAF","Shield","網路 ACL","安全群組"],x:"AWS WAF 過濾網路流量以阻止 SQL 注入和 XSS。",w:{"B":"Shield 防護 DDoS。","C":"NACL 在網路層操作。","D":"SG 做 IP/埠過濾。"}},c:[0]},
+{id:34,en:{q:"Identify S3 bucket or IAM role shared with external entity?",o:["Service Catalog","Systems Manager","IAM Access Analyzer","Organizations"],x:"IAM Access Analyzer identifies resources shared with external entities.",w:{"A":"Service Catalog manages portfolios.","B":"Systems Manager automates ops.","D":"Organizations manages accounts."}},zh:{q:"識別 S3 或 IAM 角色是否與外部實體共享？",o:["Service Catalog","Systems Manager","IAM Access Analyzer","Organizations"],x:"IAM Access Analyzer 識別與外部實體共享的資源。",w:{"A":"Service Catalog 管理組合。","B":"Systems Manager 自動化操作。","D":"Organizations 管理帳戶。"}},c:[2]},
+{id:35,en:{q:"Obtain AWS compliance reports before migration?",o:["Contact Compliance team","Download from Artifact","Open Support case","Generate with Macie"],x:"AWS Artifact is a self-service portal for compliance reports (SOC, PCI, ISO).",w:{"A":"No direct compliance team contact needed.","C":"Support case is unnecessary.","D":"Macie protects sensitive data, not reports."}},zh:{q:"遷移前獲取 AWS 合規報告？",o:["聯繫合規團隊","從 Artifact 下載","提交 Support 案例","用 Macie 生成"],x:"AWS Artifact 是合規報告的自助服務門戶（SOC、PCI、ISO）。",w:{"A":"不需聯繫合規團隊。","C":"支援案例不必要。","D":"Macie 保護敏感資料，非報告。"}},c:[1]},
+{id:36,en:{q:"After migrating to AWS, which cost is the company's direct responsibility?",o:["Application software licenses","Hardware infrastructure cost","Power for AWS servers","Physical security cost"],x:"Application software licenses remain the customer's responsibility.",w:{"B":"AWS pays for hardware.","C":"AWS pays for power.","D":"AWS handles physical security."}},zh:{q:"遷移到 AWS 後，哪個成本是公司直接負責的？",o:["應用程式軟體授權費用","硬體基礎設施費用","AWS 伺服器電力費用","實體安全費用"],x:"應用程式軟體授權仍是客戶的責任。",w:{"B":"AWS 支付硬體費用。","C":"AWS 支付電力。","D":"AWS 處理實體安全。"}},c:[0]},
+{id:37,en:{q:"IAM security best practice?",o:["Use root user access keys","Grant broad permissions","Enable MFA","Avoid rotating credentials"],x:"MFA adds essential extra security beyond passwords.",w:{"A":"Never use root access keys.","B":"Use least privilege.","D":"Rotate credentials regularly."}},zh:{q:"IAM 安全最佳實踐？",o:["使用根使用者金鑰","授予廣泛權限","啟用 MFA","避免輪換憑證"],x:"MFA 在密碼之外增加必要的額外安全層。",w:{"A":"不要使用根使用者金鑰。","B":"使用最小權限。","D":"定期輪換憑證。"}},c:[2]},
+{id:38,en:{q:"Elasticity in AWS Cloud means? (Choose TWO)",o:["EC2 restart speed","Rightsize resources on demand","Max RAM per EC2","Pay-as-you-go model","Easily procure resources"],x:"Elasticity = scaling resources up/down + easily acquiring resources when needed.",w:{"A":"Restart speed is operational.","C":"Max RAM is hardware spec.","D":"Pay-as-you-go is billing."},m:1},zh:{q:"AWS 雲端彈性是指？（選兩個）",o:["EC2 重啟速度","按需調整資源","每個 EC2 最大 RAM","按使用付費","輕鬆獲取資源"],x:"彈性 = 擴展/縮減資源 + 需要時輕鬆獲取資源。",w:{"A":"重啟速度是操作特性。","C":"最大 RAM 是硬體規格。","D":"按使用付費是計費。"},m:1},c:[1,4]},
+{id:39,en:{q:"Audit API calls in AWS accounts?",o:["CloudTrail","Trusted Advisor","Inspector","X-Ray"],x:"CloudTrail records all API calls — Console, SDKs, CLI, services.",w:{"B":"Trusted Advisor gives recommendations.","C":"Inspector scans vulnerabilities.","D":"X-Ray traces app performance."}},zh:{q:"審計 AWS 帳戶中的 API 呼叫？",o:["CloudTrail","Trusted Advisor","Inspector","X-Ray"],x:"CloudTrail 記錄所有 API 呼叫——主控台、SDK、CLI、服務。",w:{"B":"Trusted Advisor 提供建議。","C":"Inspector 掃描漏洞。","D":"X-Ray 追蹤應用效能。"}},c:[0]},
+{id:40,en:{q:"Customer responsibility with Lambda?",o:["Managing function code","Confirming hardware","Patching OS","Shutting down unused functions"],x:"Customer writes/deploys code. AWS manages infrastructure, OS, runtime.",w:{"B":"AWS manages hardware.","C":"AWS patches Lambda OS.","D":"Unused Lambda incurs no cost."}},zh:{q:"使用 Lambda 時客戶的責任？",o:["管理函數程式碼","確認硬體","修補 OS","關閉未使用的函數"],x:"客戶編寫/部署程式碼。AWS 管理基礎設施、OS、執行時環境。",w:{"B":"AWS 管理硬體。","C":"AWS 修補 Lambda OS。","D":"未使用的 Lambda 不產生費用。"}},c:[0]},
+{id:41,en:{q:"5 TB in S3, occasional queries. Most cost-effective service?",o:["Redshift","Athena","Kinesis","RDS"],x:"Athena — serverless SQL queries on S3, pay per query.",w:{"A":"Redshift needs provisioned clusters.","C":"Kinesis is for streaming.","D":"RDS is for relational databases."}},zh:{q:"S3 中 5 TB 資料，偶爾查詢。最具成本效益的服務？",o:["Redshift","Athena","Kinesis","RDS"],x:"Athena——在 S3 上的無伺服器 SQL 查詢，按查詢付費。",w:{"A":"Redshift 需要佈建叢集。","C":"Kinesis 用於串流。","D":"RDS 用於關聯式資料庫。"}},c:[1]},
+{id:42,en:{q:"Which AWS service is free?",o:["SageMaker","Config","Organizations","CloudWatch"],x:"AWS Organizations is free. You only pay for resources in member accounts.",w:{"A":"SageMaker charges for training/hosting.","B":"Config charges per item recorded.","D":"CloudWatch charges beyond free tier."}},zh:{q:"哪個 AWS 服務免費？",o:["SageMaker","Config","Organizations","CloudWatch"],x:"AWS Organizations 免費。只需為成員帳戶中的資源付費。",w:{"A":"SageMaker 對訓練/託管收費。","B":"Config 對每個記錄項目收費。","D":"CloudWatch 超出免費額度收費。"}},c:[2]},
+{id:43,en:{q:"CAF people perspective capability?",o:["Data architecture","Event management","Cloud fluency","Strategic partnership"],x:"Cloud fluency — building workforce ability to use cloud effectively.",w:{"A":"Data architecture = Platform.","B":"Event management = Operations.","D":"Strategic partnership = Business."}},zh:{q:"CAF 人員觀點的能力？",o:["資料架構","事件管理","雲端流暢度","策略合作夥伴"],x:"雲端流暢度——建立員工有效使用雲端的能力。",w:{"A":"資料架構 = 平台。","B":"事件管理 = 營運。","D":"策略合作夥伴 = 業務。"}},c:[2]},
+{id:44,en:{q:"Upfront commitment for EC2 with lowest cost? (Choose TWO)",o:["Spot","On-Demand","Reserved Instances","Savings Plans","Dedicated Hosts"],x:"RI and Savings Plans both require commitments for significant discounts.",w:{"A":"Spot has no commitment, can be interrupted.","B":"On-Demand is most expensive.","E":"Dedicated Hosts are for licensing."},m:1},zh:{q:"EC2 預先承諾以最低成本？（選兩個）",o:["競價","隨需","預留執行個體","Savings Plans","專用主機"],x:"RI 和 Savings Plans 都需要承諾以獲得顯著折扣。",w:{"A":"競價無承諾，可被中斷。","B":"隨需最貴。","E":"專用主機用於授權。"},m:1},c:[2,3]},
+{id:45,en:{q:"Migrate on-prem databases near current location. Which resource to choose RDS area?",o:["Connect","Wavelength","Regions","Direct Connect"],x:"Select the AWS Region closest to your location.",w:{"A":"Connect is a contact center.","B":"Wavelength is for 5G edge.","D":"Direct Connect is networking."}},zh:{q:"將本地資料庫遷移到附近。用哪個資源選擇 RDS 部署區域？",o:["Connect","Wavelength","區域","Direct Connect"],x:"選擇最接近您位置的 AWS 區域。",w:{"A":"Connect 是客服中心。","B":"Wavelength 用於 5G 邊緣。","D":"Direct Connect 是網路。"}},c:[2]},
+{id:46,en:{q:"Estimate costs before deployment?",o:["Free Tier","Pricing Calculator","Billing & Cost Management","Cost & Usage Report"],x:"Pricing Calculator creates cost estimates before deploying.",w:{"A":"Free Tier provides free allowances.","C":"Billing tracks actual spending.","D":"CUR exports billing data."}},zh:{q:"部署前估算成本？",o:["免費方案","Pricing Calculator","Billing & Cost Management","成本和使用報告"],x:"Pricing Calculator 在部署前建立成本估算。",w:{"A":"免費方案提供免費額度。","C":"Billing 追蹤實際支出。","D":"CUR 匯出計費資料。"}},c:[1]},
+{id:47,en:{q:"Deliver images/videos globally with minimal latency?",o:["CloudFront","S3 cross-region replication","VPN across Regions","PrivateLink"],x:"CloudFront is a CDN caching content at edge locations worldwide.",w:{"B":"Replication copies data but no edge caching.","C":"VPN is secure connectivity.","D":"PrivateLink is private service access."}},zh:{q:"以最低延遲在全球交付圖片和視頻？",o:["CloudFront","S3 跨區域複製","跨區域 VPN","PrivateLink"],x:"CloudFront 是在全球邊緣位置快取內容的 CDN。",w:{"B":"複製複製資料但無邊緣快取。","C":"VPN 是安全連接。","D":"PrivateLink 是私有服務訪問。"}},c:[0]},
+{id:48,en:{q:"Economies of scale benefit?",o:["Trade variable for fixed expense","Increased speed and agility","Lower variable costs","Increased operational costs"],x:"AWS's scale = lower variable costs passed to customers.",w:{"A":"Cloud trades fixed FOR variable.","B":"Speed/agility is separate benefit.","D":"Cloud reduces, not increases costs."}},zh:{q:"規模經濟的效益？",o:["將可變換為固定費用","提高速度和敏捷性","較低的可變成本","增加的營運成本"],x:"AWS 的規模 = 較低的可變成本傳遞給客戶。",w:{"A":"雲端將固定換為可變。","B":"速度/敏捷性是獨立效益。","D":"雲端降低而非增加成本。"}},c:[2]},
+{id:49,en:{q:"Define cloud resources as code via CloudFormation?",o:["CLI","Developer Center","CDK","CodeStar"],x:"CDK lets you define infrastructure using programming languages, synthesized to CloudFormation.",w:{"A":"CLI is command-line interface.","B":"Developer Center is docs.","D":"CodeStar is CI/CD management."}},zh:{q:"透過 CloudFormation 將雲端資源定義為程式碼？",o:["CLI","Developer Center","CDK","CodeStar"],x:"CDK 讓您使用程式語言定義基礎設施，合成為 CloudFormation。",w:{"A":"CLI 是命令列介面。","B":"Developer Center 是文件。","D":"CodeStar 是 CI/CD 管理。"}},c:[2]},
+{id:50,en:{q:"App needs temporary, limited-privilege credentials?",o:["API Gateway","IAM users","STS","IAM instance profiles"],x:"STS issues temporary credentials that auto-expire.",w:{"A":"API Gateway manages endpoints.","B":"IAM users have permanent creds.","D":"Instance profiles use STS under the hood."}},zh:{q:"應用需要臨時、有限權限的憑證？",o:["API Gateway","IAM 使用者","STS","IAM 執行個體設定檔"],x:"STS 簽發自動過期的臨時憑證。",w:{"A":"API Gateway 管理端點。","B":"IAM 使用者有永久憑證。","D":"執行個體設定檔底層使用 STS。"}},c:[2]},
+];
+
+const SETS=[{id:1,start:1,end:50,range:"Q1–Q50"}];
+
+// ── APP STATE ─────────────────────────────────────────────────────────────────
+let lang="zh",view="login",curUser=null,activeSet=null,curIdx=0;
+let ans={},revd={},msel={},userResults={};
+let reviewSet=null,modalFn=null;
+const t=()=>T[lang];
+const K=i=>String.fromCharCode(65+i);
+const fmt=iso=>{if(!iso)return"";const d=new Date(iso);return d.toLocaleDateString()+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});};
+const getQs=sid=>Q.filter(q=>q.id>=SETS.find(s=>s.id===sid).start&&q.id<=SETS.find(s=>s.id===sid).end);
+const uAns=(qid,multi)=>multi?(msel[qid]||[]):(ans[qid]!==undefined?[ans[qid]]:[]);
+const aCnt=()=>getQs(activeSet).filter(q=>q.en.m?(msel[q.id]||[]).length>0:ans[q.id]!==undefined).length;
+
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function $(id){return document.getElementById(id);}
+function showV(v){['V-login','V-menu','V-exam','V-result','V-review'].forEach(id=>hide(id));show('V-'+v);view=v;renderHeader();}
+
+// ── HEADER ────────────────────────────────────────────────────────────────────
+function renderHeader(){
+  const hl=$('hl'),hr=$('hr');
+  if(view==='login'){hl.innerHTML=`<span style="font-weight:500;font-size:16px">${t().title}</span>`;hr.innerHTML=`<button class="btn-ghost" style="font-size:12px;padding:4px 12px" onclick="toggleLang()">${t().lang}</button>`;}
+  else{
+    const backBtn=view!=='menu'?`<button class="btn-ghost" onclick="goMenu()" style="font-size:13px;padding:4px 10px">${t().back}</button>`:'';
+    hl.innerHTML=`<div style="display:flex;align-items:center;gap:8px">${backBtn}<span class="txt2" style="font-size:13px">${t().hi}, <strong style="color:#1a1a1a">${curUser}</strong></span></div>`;
+    hr.innerHTML=`<button class="btn-ghost" style="font-size:12px;padding:4px 12px" onclick="toggleLang()">${t().lang}</button><button class="btn-ghost btn-danger" style="font-size:12px;padding:4px 12px" onclick="doLogout()">${t().logout}</button>`;
+  }
+}
+function toggleLang(){lang=lang==='zh'?'en':'zh';if(view==='login')renderLogin();else if(view==='menu')renderMenu();else if(view==='exam')renderExam();else if(view==='result')renderResult();else if(view==='review')renderReview();renderHeader();}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function renderLogin(){
+  showV('login');
+  $('V-login').innerHTML=`<div class="container-sm" style="padding-top:15vh;text-align:center">
+    <h1 style="font-size:24px;font-weight:500;margin-bottom:4px">${t().title}</h1>
+    <p class="txt2" style="margin-bottom:2rem">${t().subtitle}</p>
+    <div class="card" style="text-align:left">
+      <div id="login-form">
+        <label class="txt2" style="font-size:12px;display:block;margin-bottom:4px">${t().username}</label>
+        <input class="inp" id="inp-user" placeholder="${t().username}" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <div class="err-text" id="login-err"></div>
+        <button class="btn1" style="width:100%;justify-content:center;margin-top:8px" onclick="doLogin()">${t().loginBtn}</button>
+        <div style="text-align:center;margin-top:12px"><span class="link" onclick="showRegister()">${t().register}</span></div>
+      </div>
+      <div id="reg-form" class="hidden">
+        <label class="txt2" style="font-size:12px;display:block;margin-bottom:4px">${t().username}</label>
+        <input class="inp" id="inp-reg" placeholder="${t().username}" onkeydown="if(event.key==='Enter')doRegister()"/>
+        <div class="err-text" id="reg-err"></div>
+        <button class="btn1" style="width:100%;justify-content:center;margin-top:8px" onclick="doRegister()">${t().registerBtn}</button>
+        <div style="text-align:center;margin-top:12px"><span class="link" onclick="showLoginForm()">${t().login}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+function showRegister(){hide('login-form');show('reg-form');$('reg-err').textContent='';}
+function showLoginForm(){show('login-form');hide('reg-form');$('login-err').textContent='';}
+
+async function doLogin(){
+  const name=$('inp-user').value.trim();
+  if(!name){$('login-err').textContent=t().enterName;return;}
+  try{
+    const doc=await db.collection('users').doc(name).get();
+    if(!doc.exists){$('login-err').textContent=t().noUser;return;}
+    curUser=name;localStorage.setItem('aws_quiz_user',name);
+    await loadUserResults();renderMenu();
+  }catch(e){$('login-err').textContent='Error: '+e.message;}
+}
+
+async function doRegister(){
+  const name=$('inp-reg').value.trim();
+  if(!name){$('reg-err').textContent=t().enterName;return;}
+  try{
+    const doc=await db.collection('users').doc(name).get();
+    if(doc.exists){$('reg-err').textContent=t().userExists;return;}
+    await db.collection('users').doc(name).set({createdAt:new Date().toISOString()});
+    curUser=name;localStorage.setItem('aws_quiz_user',name);
+    userResults={};renderMenu();
+  }catch(e){$('reg-err').textContent='Error: '+e.message;}
+}
+
+function doLogout(){curUser=null;localStorage.removeItem('aws_quiz_user');userResults={};renderLogin();}
+
+async function loadUserResults(){
+  userResults={};
+  try{
+    const snap=await db.collection('records').where('username','==',curUser).get();
+    snap.forEach(doc=>{const d=doc.data();userResults[d.setId]=d;});
+  }catch(e){console.error(e);}
+}
+
+async function saveResult(setId,data){
+  const docId=curUser+'_set'+setId;
+  const payload={...data,username:curUser,setId};
+  try{await db.collection('records').doc(docId).set(payload);}catch(e){console.error(e);}
+}
+
+async function deleteResult(setId){
+  const docId=curUser+'_set'+setId;
+  try{await db.collection('records').doc(docId).delete();}catch(e){console.error(e);}
+  delete userResults[setId];
+}
+
+// ── MENU ──────────────────────────────────────────────────────────────────────
+function goMenu(){renderMenu();}
+function renderMenu(){
+  showV('menu');
+  let h=`<div class="container-sm"><h2 style="font-size:15px;font-weight:500;margin-bottom:12px">${t().examSet}</h2>`;
+  SETS.forEach(s=>{
+    const r=userResults[s.id],pct=r?Math.round(r.score/r.total*100):null;
+    const done=r?`<span class="tag tag-green">${t().completed}</span>`:`<span class="tag tag-gray">${t().notStarted}</span>`;
+    const sc=r?`<span style="color:${pct>=72?'#0F6E56':'#A32D2D'};font-weight:500;margin-left:6px">${t().score}: ${r.score}/${r.total} (${pct}%)</span>`:'';
+    const dt=r?.date?`<div class="txt2" style="font-size:12px;margin-top:3px">📅 ${t().takenOn}: ${fmt(r.date)}</div>`:'';
+    const rb=r&&r.errors.length>0?`<button class="btn-ghost" onclick="openReview(${s.id})">👁 ${t().review} (${r.errors.length})</button>`:'';
+    const sb=`<button class="${r?'btn-ghost':'btn1'}" style="${r?'border-color:#378ADD;color:#378ADD':''}" onclick="startExam(${s.id})">${r?'🔄 '+t().retake:'▶ '+t().start}</button>`;
+    const db2=r?`<button class="btn-ghost btn-danger" onclick="confirmDel(${s.id})">🗑 ${t().deleteRecord}</button>`:'';
+    h+=`<div class="card"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div><div style="font-weight:500;font-size:15px;margin-bottom:3px">${t().examSet} ${s.id} <span class="txt2" style="font-weight:400;font-size:12px">(${s.range})</span>${done}</div>
+      <div class="txt2">50 ${t().questions} · ${t().perQ}${sc}</div>${dt}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${rb}${sb}${db2}</div></div></div>`;
+  });
+  h+='</div>';
+  $('V-menu').innerHTML=h;
+}
+
+// ── EXAM ──────────────────────────────────────────────────────────────────────
+function startExam(sid){activeSet=sid;curIdx=0;ans={};revd={};msel={};showV('exam');renderExam();}
+
+function renderExam(){
+  const qs=getQs(activeSet),tot=qs.length,q=qs[curIdx];if(!q)return;
+  const multi=!!q.en.m,qid=q.id,rv=!!revd[qid],pct=Math.round((curIdx/tot)*100+(1/tot)*100);
+  let oh='';
+  q[lang].o.forEach((opt,i)=>{
+    const ua=uAns(qid,multi),uc=ua.includes(i),ic=q.c.includes(i),sl=multi?(msel[qid]||[]).includes(i):false;
+    let cls='opt-btn',icon='';
+    if(rv){cls+=' revealed';if(ic&&uc){cls+=' correct';icon='<span style="margin-left:auto;color:#0F6E56;font-weight:700">✓</span>';}else if(ic){cls+=' missed';icon='<span style="margin-left:auto;color:#1D9E75;font-weight:700;opacity:.6">✓</span>';}else if(uc){cls+=' wrong';icon='<span style="margin-left:auto;color:#A32D2D;font-weight:700">✗</span>';}}
+    else if(sl){cls+=' sel-multi';}
+    oh+=`<button class="${cls}" onclick="optClk(${i})"><span class="opt-key">${K(i)}</span><span style="flex:1">${opt}</span>${icon}</button>`;
+  });
+  let mb='',eb='';
+  if(multi&&!rv){const n=(msel[qid]||[]).length;mb=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="txt2">${n}/2 ${t().selected}</span><button class="btn1" onclick="chkMulti()" ${n<2?'style="opacity:.5;cursor:default"':''}>${t().check}</button></div>`;}
+  if(rv){
+    const ck=q.c.map(i=>K(i)).join(', ');
+    let wo='';if(q[lang].w&&Object.keys(q[lang].w).length>0){wo=`<div class="txt2" style="font-weight:500;font-size:12px;margin-top:8px">${t().whyWrong}:</div>`;Object.entries(q[lang].w).forEach(([k,v])=>{wo+=`<div class="txt2" style="margin-bottom:2px"><strong style="font-weight:500">${k}:</strong> ${v}</div>`;});}
+    eb=`<div class="explain-box"><div style="color:#0F6E56;font-weight:500;margin-bottom:4px">✓ ${t().correctAnswer}: ${ck}</div><div class="txt2"><strong style="font-weight:500">${t().whyCorrect}: </strong>${q[lang].x}</div>${wo}</div>`;
+  }
+  const last=curIdx===tot-1;
+  const nb=last?`<button class="btn1" onclick="doSubmit()">✓ ${t().submit}</button>`:`<button class="btn1" onclick="navE(1)">${t().next} →</button>`;
+  $('V-exam').innerHTML=`<div class="container">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span class="txt2">${t().examSet} ${activeSet} · ${t().progress}: ${aCnt()}/${tot}</span><span class="txt2">${curIdx+1}/${tot}</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card"><div class="txt2" style="font-size:12px;margin-bottom:5px">Q${q.id}</div><div style="font-size:15px;font-weight:500;line-height:1.6">${q[lang].q}</div>${multi?`<div style="font-size:12px;color:#185FA5;font-style:italic;margin-top:6px">${t().chooseTwo}</div>`:''}</div>
+    ${oh}${mb}${eb}
+    <div class="nav-row"><button class="btn-ghost" onclick="navE(-1)" ${curIdx===0?'style="opacity:.4;cursor:default"':''}>← ${t().prev}</button>
+    <div style="display:flex;gap:8px"><button class="btn-ghost" onclick="confirmEarly()">⚑ ${t().earlySubmit}</button>${nb}</div></div></div>`;
+}
+function navE(d){const n=curIdx+d;if(n<0||n>=getQs(activeSet).length)return;curIdx=n;renderExam();}
+function optClk(i){const q=getQs(activeSet)[curIdx],qid=q.id;if(revd[qid])return;if(q.en.m){const s=[...(msel[qid]||[])],p=s.indexOf(i);if(p>=0)s.splice(p,1);else if(s.length<2)s.push(i);msel[qid]=s;}else{ans[qid]=i;revd[qid]=true;}renderExam();}
+function chkMulti(){const q=getQs(activeSet)[curIdx],qid=q.id,s=msel[qid]||[];if(s.length<2)return;ans[qid]=s;revd[qid]=true;renderExam();}
+
+async function doSubmit(){
+  const qs=getQs(activeSet);let score=0;const errors=[];
+  qs.forEach(q=>{
+    const multi=!!q.en.m,qid=q.id,ua=uAns(qid,multi);
+    const c=[...q.c].sort(),u=[...ua].sort();
+    if(JSON.stringify(c)===JSON.stringify(u))score+=2;
+    else errors.push({qid,userAns:u,correct:c});
+  });
+  const data={score,errors,total:qs.length*2,date:new Date().toISOString()};
+  userResults[activeSet]=data;
+  await saveResult(activeSet,data);
+  closeModal();renderResult();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function showModal(title,desc,okLabel,danger,fn){
+  $('m-title').textContent=title;$('m-desc').textContent=desc;$('m-cancel').textContent=t().cancel;
+  const b=$('m-ok');b.textContent=okLabel;b.className='btn1';b.style.background=danger?'#A32D2D':'#378ADD';b.style.borderColor=danger?'#A32D2D':'#378ADD';
+  modalFn=fn;b.onclick=()=>{if(modalFn)modalFn();};show('modal');
+}
+function closeModal(){hide('modal');modalFn=null;}
+function confirmEarly(){const n=aCnt(),tot=getQs(activeSet).length;showModal(t().earlySubmitConfirm,t().earlySubmitDesc.replace('{n}',n).replace('{total}',tot),t().confirm,false,()=>doSubmit());}
+function confirmDel(sid){showModal(t().deleteConfirm,t().deleteDesc,t().deleteRecord,true,async()=>{await deleteResult(sid);closeModal();renderMenu();});}
+
+// ── RESULT ────────────────────────────────────────────────────────────────────
+function renderResult(){
+  showV('result');const r=userResults[activeSet];if(!r)return;
+  const pct=Math.round(r.score/r.total*100),pass=pct>=72;
+  const rb=r.errors.length>0?`<button class="btn-ghost" onclick="openReview(${activeSet})">👁 ${t().review} (${r.errors.length})</button>`:'';
+  $('V-result').innerHTML=`<div class="container-sm"><div class="card" style="text-align:center;padding:2.5rem 2rem">
+    <div style="font-size:56px;font-weight:500;color:${pass?'#1D9E75':'#A32D2D'}">${pct}%</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:4px">${pass?t().passed:t().failed}</div>
+    <div class="txt2">${t().passMark}</div>
+    <div class="txt2" style="margin:8px 0 24px;font-size:12px">📅 ${t().takenOn}: ${fmt(r.date)}</div>
+    <div style="display:flex;justify-content:center;gap:40px;margin-bottom:28px">
+      <div><div style="font-size:24px;font-weight:500;color:#1D9E75">${r.score}</div><div class="txt2">${t().score}</div></div>
+      <div><div style="font-size:24px;font-weight:500;color:#A32D2D">${r.errors.length*2}</div><div class="txt2">${t().wrongPts}</div></div>
+      <div><div style="font-size:24px;font-weight:500">${r.total}</div><div class="txt2">${t().totalPts}</div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${rb}
+      <button class="btn1" onclick="startExam(${activeSet})">🔄 ${t().retake}</button>
+      <button class="btn-ghost btn-danger" onclick="confirmDel(${activeSet})">🗑 ${t().deleteRecord}</button>
+    </div></div></div>`;
+}
+
+// ── REVIEW ────────────────────────────────────────────────────────────────────
+function openReview(sid){reviewSet=sid;renderReview();}
+function renderReview(){
+  showV('review');const r=userResults[reviewSet];
+  const qs=getQs(reviewSet).filter(q=>(r?.errors||[]).some(e=>e.qid===q.id));
+  let h=`<div class="container"><h2 style="font-size:18px;font-weight:500;margin-bottom:4px">${t().errorReview}</h2><p class="txt2" style="margin-bottom:24px">${t().examSet} ${reviewSet} · ${qs.length} ${t().wrong}${r?.date?' · '+fmt(r.date):''}</p>`;
+  if(!qs.length)h+=`<div class="txt2" style="text-align:center;padding:3rem">${t().noErrors}</div>`;
+  qs.forEach(q=>{
+    const multi=!!q.en.m,err=(r?.errors||[]).find(e=>e.qid===q.id),ua=err?.userAns||[];
+    let yh=ua.length===0?`<div class="sec-bg txt2" style="font-style:italic;font-size:13px">${t().unanswered}</div>`:ua.map(i=>`<div class="review-ans review-wrong"><span style="font-weight:500;color:#A32D2D;min-width:18px">${K(i)}</span><span>${q[lang].o[i]}</span><span style="margin-left:auto;font-weight:700;color:#A32D2D">✗</span></div>`).join('');
+    let ch=q.c.map(i=>`<div class="review-ans review-correct"><span style="font-weight:500;color:#0F6E56;min-width:18px">${K(i)}</span><span>${q[lang].o[i]}</span><span style="margin-left:auto;font-weight:700;color:#0F6E56">✓</span></div>`).join('');
+    h+=`<div class="card"><div class="txt2" style="font-size:12px;margin-bottom:6px">Q${q.id}${multi?' · '+t().chooseTwo:''}</div>
+      <div style="font-size:15px;font-weight:500;line-height:1.6;margin-bottom:14px">${q[lang].q}</div>
+      <div class="txt2" style="font-size:12px;font-weight:500;margin-bottom:6px">${t().yourAns}:</div>${yh}
+      <div class="txt2" style="font-size:12px;font-weight:500;margin:12px 0 6px">${t().correctAns}:</div>${ch}
+      <div class="review-hint"><strong>${t().whyCorrect}: </strong>${q[lang].x}</div></div>`;
+  });
+  h+='</div>';$('V-review').innerHTML=h;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async function init(){
+  const saved=localStorage.getItem('aws_quiz_user');
+  if(saved){
+    try{
+      const doc=await db.collection('users').doc(saved).get();
+      if(doc.exists){curUser=saved;await loadUserResults();renderMenu();return;}
+    }catch(e){console.error(e);}
+  }
+  renderLogin();
+})();
+</script>
+</body>
+</html>
